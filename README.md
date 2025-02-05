@@ -1,2 +1,2 @@
 # Project_API
-FastAPI를 사용한 프로젝트 개발
+FastAPI를 사용한 프로젝트_당근마켓 API 리버싱
