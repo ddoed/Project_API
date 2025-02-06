@@ -27,10 +27,14 @@ class Product(SQLModel, table=True):
     title: str
     content: str
     price: int
+    # 판매 게시글을 올린 시각
     date: datetime
     heart_count: int = Field(default=0)
+    # 판매자 id
     user_id: int = Field(foreign_key="user.id")
     category_id: int = Field(foreign_key="category.id")
+    soldout: bool = False
+
 
     user: User = Relationship(back_populates="products")
     category: Category = Relationship(back_populates="products")
@@ -65,8 +69,10 @@ class Comment(SQLModel, table=True):
 
 class Purchase(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    # 구매자 id
     user_id: int = Field(foreign_key="user.id")
     product_id: int = Field(foreign_key="product.id")
+    # 판매 완료 시각
     purchase_date: datetime
     
     user: User = Relationship(back_populates="purchases")
