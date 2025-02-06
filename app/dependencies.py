@@ -19,4 +19,8 @@ def get_db_session():
 
 # 데이터베이스 테이블 생성 함수
 def create_db_and_tables():
+<<<<<<< HEAD
     SQLModel.metadata.create_all(db_engine)
+=======
+    SQLModel.metadata.create_all(db_engine)
+>>>>>>> a80b2eeb35178a50597822458b7042e39da644f8
