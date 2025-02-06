@@ -1,5 +1,6 @@
 from sqlmodel import Field, SQLModel, Relationship
 from typing import Optional, List
+from datetime import *
 # * back_populates로 양방향 관계 설정
 
 class User(SQLModel, table=True):
@@ -26,6 +27,7 @@ class Product(SQLModel, table=True):
     title: str
     content: str
     price: int
+    date: datetime
     heart_count: int = Field(default=0)
     user_id: int = Field(foreign_key="user.id")
     category_id: int = Field(foreign_key="category.id")
@@ -60,3 +62,12 @@ class Comment(SQLModel, table=True):
 
     product: Product = Relationship(back_populates="comments")
     user: User = Relationship(back_populates="comments")
+
+class Purchase(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    product_id: int = Field(foreign_key="product.id")
+    purchase_date: datetime
+    
+    user: User = Relationship(back_populates="purchases")
+    product: Product = Relationship(back_populates="purchases")
