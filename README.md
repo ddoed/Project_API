@@ -11,4 +11,5 @@
 ```
 - v0.1.0 base models & database dependencies
 - v0.1.1 append datetime in Product & make new table Purchase
+- v0.1.2 append commnet, product, user/product/{bought/likes} api 
 ```
