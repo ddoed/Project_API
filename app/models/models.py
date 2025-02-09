@@ -92,8 +92,9 @@ class ChatRoom(SQLModel, table=True):
     id: int = Field(primary_key=True)
     product_id: int = Field(foreign_key="product.id")
     created_at: datetime
-    chat_host: int = Field(foreign_key="user.id")
-    chat_guest: int = Field(foreign_key="user.id")
+    # host guest에서 seller, buyer로 이름 변경
+    chat_seller: int = Field(foreign_key="user.id")
+    chat_buyer: int = Field(foreign_key="user.id")
 
 # 메세지 모델
 class Message(SQLModel, table=True):
