@@ -46,7 +46,7 @@ class Product(SQLModel, table=True):
     comments: List["Comment"] = Relationship(back_populates="product")
     # ! Product 모델에 purchases라는 관계가 없는데, Purchase 모델에서 Product와의 관계를 설정하려고 했기 때문에 에러 발생
     # // Product 모델에 purchases Relationship을 추가해서 에러 수정
-    purchases: list["Purchase"] = Relationship(back_populates="product")
+    purchases: List["Purchase"] = Relationship(back_populates="product")
 
 class ProductImage(SQLModel, table=True):
     # * 하나의 게시물에 여러개의 사진이 연결될 수 있도록 id를 설정
@@ -86,3 +86,20 @@ class Purchase(SQLModel, table=True):
     
     user: User = Relationship(back_populates="purchases")
     product: Product = Relationship(back_populates="purchases")
+
+# 채팅방 모델
+class ChatRoom(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    product_id: int = Field(foreign_key="product.id")
+    created_at: datetime
+    chat_host: int = Field(foreign_key="user.id")
+    chat_guest: int = Field(foreign_key="user.id")
+
+# 메세지 모델
+class Message(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    chatroom_id: int = Field(foreign_key="chatroom.id")
+    sender_id: int = Field(foreign_key="user.id")
+    receiver_id: int = Field(foreign_key="user.id")
+    content: str
+    sent_at: datetime
