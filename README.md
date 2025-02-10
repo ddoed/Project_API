@@ -10,13 +10,14 @@
 ## 개발 버전 관리
 ```
 - v0.1.0 base models & database dependencies(25.02.06)
-- v0.1.1 append datetime in Product & make new table Purchase (25.02.06)
-- v0.1.2 append commnet, product, user/product/{bought/likes} api (25.02.06)
+- v0.1.1 append datetime in Product & make new table Purchase
+- v0.1.2 append commnet, product, user/product/{bought/likes} api
 - v0.1.3 add product handlers (25.02.07)
-- v0.1.4 add commnet handlers (25.02.07)
+- v0.1.4 add commnet handlers
 - v0.1.5 add auth handlers (25.02.09)
-- v0.1.6 update models & add chat handlers (25.02.09)
+- v0.1.6 update models & add chat handlers
 - v0.1.7 add likes, bought handlers & merge (25.02.10)
+- v0.1.8 add front setup files
 ```
 ---
 ## 실행 테스트
