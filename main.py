@@ -3,7 +3,9 @@
 # ! 주의사항이나 에러가 발생해 수정이 필요한 사항에 추가
 # ? 궁금점이나 수정이 필요한 부분이 있는 경우
 # // 해결한 사항
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from app.dependencies import get_db_session, create_db_and_tables
 from app.models.models import User, Product, Category, ProductImage, Likes, Comment, Purchase  # 모델들을 불러옵니다.
@@ -24,3 +26,13 @@ app.include_router(auth_handler.router)
 app.include_router(chat_handlers.router)
 app.include_router(comment_handlers.router)
 app.include_router(jsw_need_to_validate.router)
+
+# 정적 파일 (CSS, JS, 이미지 등) 제공
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# HTML 템플릿 설정
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/")
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "title": "홈페이지"})
