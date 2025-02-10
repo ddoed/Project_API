@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 # 모델들을 임포트
 from app.models.models import User, Product, Category, ProductImage, Likes, Comment  
-
+from fastapi import UploadFile
 # 데이터베이스 URL 설정 (여기서는 SQLite 사용)
 db_file_name = "carrot.db"
 db_url = f"sqlite:///./{db_file_name}"
@@ -21,3 +21,28 @@ def get_db_session():
 # 데이터베이스 테이블 생성 함수
 def create_db_and_tables():
     SQLModel.metadata.create_all(db_engine)
+
+# JSW
+# dependencies.py -> dependencies/io.py, db.py로 모듈화 하면 예쁠 듯듯
+# 팀원과 상의 해야할 듯
+import os
+from typing import Optional
+UPLOAD_DIR = "./uploads"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
+async def save_UploadFile(file: UploadFile, filename: str) -> Optional[str]:
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if os.path.exists(file_path):
+        return None
+    with open(file_path, "wb") as file_object:
+        data = await file.read()
+        file_object.write(data)
+    return file_path
+
+def delete_file(file_path: str) -> bool:
+    if not os.path.exists(file_path):
+        return False
+    
+    os.remove(file_path)
+    return True
