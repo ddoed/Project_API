@@ -35,3 +35,6 @@ fastapi dev main.py
 1. models.py 내부 모듈 사용 부분 분할(user, product, comment...)
 2. jsw_need_val...py 모듈 테스트 후 각 handler 내부로 분할 (정성우님)
 3. 관련 코드 테스트 후 notion에 api 결과 작성(박지은님)
+
+## carrot.db
+테스트용 db
