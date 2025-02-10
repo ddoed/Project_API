@@ -36,3 +36,24 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "title": "홈페이지"})
+
+@app.get("/my_page")
+async def my_page(request: Request):
+    user_data = {
+        "name": "홍길동",
+        "email": "hong@example.com",
+        "profile_pic": "https://via.placeholder.com/150"
+    }
+    return templates.TemplateResponse("my_page.html", {"request": request, "user": user_data})
+
+@app.get("/sales_list")
+async def sales_list(request: Request):
+    return templates.TemplateResponse("sales_list.html", {"request": request})
+
+@app.get("/bought_list")
+async def bought_list(request: Request):
+    return templates.TemplateResponse("bought_list.html", {"request": request})
+
+@app.get("/likes_list")
+async def likes_list(request: Request):
+    return templates.TemplateResponse("likes_list.html", {"request": request})

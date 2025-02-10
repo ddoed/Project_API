@@ -128,3 +128,73 @@ footer {
     width: 100%;
     bottom: 0;
 }
+
+.carrot-button {
+    background-color: #ff8c42;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.carrot-button:hover {
+    background-color: #e07b34;
+}
+
+/* my page 관련 css*/
+.profile {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.profile img {
+    border-radius: 50%;
+    width: 150px;
+    height: 150px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    flex-direction: column; /* 버튼을 세로로 정렬 */
+    align-items: center; /* 가운데 정렬 */
+    margin-top: 20px;
+    height: 60vh;
+}
+
+.button-box {
+    background-color: #f8f9fa; /* 연한 배경 */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+    width: 250px; /* 박스 너비 */
+    text-align: center;
+}
+
+.button-container ul {
+    list-style: none;
+    height: 50vh;
+    display: block;
+}
+
+.button-container ul li {
+    margin: 10px; /* 버튼 간격 */
+    height: auto;
+}
+
+.carrot-button {
+    width: 150px; /* 버튼이 부모 너비만큼 */
+    background-color: #ff8c42;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.carrot-button:hover {
+    background-color: #e07b34;
+}

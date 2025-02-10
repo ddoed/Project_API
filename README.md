@@ -2,10 +2,10 @@
 - FastAPI를 사용한 프로젝트_당근마켓 API 리버싱
 ---
 ## 프로젝트 참여자
-- 정성우
-- 임나빈
-- 박지은
-- 강태진
+- 정성우[(qda-sw)](https://github.com/qda-sw)
+- 임나빈[(ddoed)](https://github.com/ddoed)
+- 박지은[(phlox22)](https://github.com/phlox22)
+- 강태진[(Mireutale)](https://github.com/Mireutale)
 ---
 ## 개발 버전 관리
 ```
