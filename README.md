@@ -18,6 +18,7 @@
 - v0.1.6 update models & add chat handlers
 - v0.1.7 add likes, bought handlers & merge (25.02.10)
 - v0.1.8 add front setup files
+- v0.1.9 add front my_page, sales, boughts, likes & img
 ```
 ---
 ## 실행 테스트
