@@ -33,6 +33,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # HTML 템플릿 설정
 templates = Jinja2Templates(directory="templates")
 
+# 정적 파일을 서빙할 static 폴더 등록
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "title": "홈페이지"})
