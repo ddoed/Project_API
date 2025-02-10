@@ -2,11 +2,12 @@
 from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
-from models import User, Product, Category, ProductImage, Likes, Comment  # 모델들을 임포트
+# 모델들을 임포트
+from app.models.models import User, Product, Category, ProductImage, Likes, Comment  
 
 # 데이터베이스 URL 설정 (여기서는 SQLite 사용)
 db_file_name = "carrot.db"
-db_url = "sqlite:///./{db_file_name}"
+db_url = f"sqlite:///./{db_file_name}"
 # 여러 스레드에서 SQLite 연결을 공유할 수 있도록 설정
 db_conn_args = {"check_same_thread": False}
 # 데이터베이스 엔진 생성, 데이터베이스와의 실제 연결 관리

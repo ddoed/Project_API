@@ -6,9 +6,12 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlmodel import Session, select
 from app.dependencies import get_db_session, create_db_and_tables
-from app.models import User, Product, Category, ProductImage, Likes, Comment, Purchase  # 모델들을 불러옵니다.
+from app.models.models import User, Product, Category, ProductImage, Likes, Comment, Purchase  # 모델들을 불러옵니다.
 from pydantic import BaseModel
-from app.handlers import mireutale_need_to_validate
+from app.handlers import (auth_handler,
+                          chat_handlers,
+                          comment_handlers,
+                          jsw_need_to_validate)
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
@@ -17,7 +20,7 @@ app = FastAPI()
 def on_startup():
     create_db_and_tables()
 
-app.include_router(mireutale_need_to_validate.get_user_bought)
-app.include_router(mireutale_need_to_validate.get_user_likes)
-app.include_router(mireutale_need_to_validate.post_product_likes_add)
-app.include_router(mireutale_need_to_validate.delete_product_likes)
+app.include_router(auth_handler.router)
+app.include_router(chat_handlers.router)
+app.include_router(comment_handlers.router)
+app.include_router(jsw_need_to_validate.router)

@@ -1,5 +1,6 @@
 from sqlmodel import Field, SQLModel, Relationship
 from typing import Optional, List
+from pydantic import BaseModel
 from datetime import *
 # * back_populates로 양방향 관계 설정
 
@@ -16,6 +17,10 @@ class User(SQLModel, table=True):
     # ! User 모델에서 purchases 관계가 없는데, Purchase 모델에서 user와의 관계를 설정하려고 했기 때문에 에러 발생
     # // User 모델에 purchases Relationship을 추가하여, 에러를 해결함
     purchases: List["Purchase"] = Relationship(back_populates="user")
+
+# Request body에서 받을 데이터를 위한 Pydantic 모델 정의
+class user_LikeRequest(BaseModel):
+    user_id: int  # 사용자의 ID
 
 class Category(SQLModel, table=True):
     # * id 자동생성, 증가하는 숫자
