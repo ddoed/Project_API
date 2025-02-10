@@ -2,11 +2,11 @@ from app.models.models import Product, ProductImage
 from app.dependencies import get_db_session
 from fastapi import FastAPI, APIRouter, Depends, Query
 from sqlmodel import Session, select
-from pydantic import BaseModel, str
+from pydantic import BaseModel
 from typing import Optional, List
 from enum import Enum
 
-route = APIRouter(
+router = APIRouter(
     prefix="/products",
 )
 
@@ -26,7 +26,7 @@ class ProductSortType(Enum):
     ACCURACY = 0
     LATEST = 1
     
-@route.get("/", status_code=200)
+@router.get("/", status_code=200)
 def get_product_(q: Optional[str] = Query(None),
                  category_id: Optional[int] = Query(None),
                  soldout: Optional[bool] = Query(None),
@@ -38,36 +38,36 @@ def get_product_(q: Optional[str] = Query(None),
                  session: Session = Depends(get_db_session)) -> List[ProductResponse]:
     raise NotImplementedError()
 
-@route.post("/", status_code=201)
+@router.post("/", status_code=201)
 def create_product(productRequest: ProductRequest,
                    session: Session = Depends(get_db_session)) -> ProductResponse:
     raise NotImplementedError()
 
-@route.put("/{product_id}", status_code=200)
+@router.put("/{product_id}", status_code=200)
 def update_product(productRequest: ProductRequest,
                    session: Session = Depends(get_db_session)) -> ProductResponse:
     raise NotImplementedError()
 
-@route.delete("/{product_id}", status_code=200)
+@router.delete("/{product_id}", status_code=200)
 def delete_product(product_id: int,
                    session: Session = Depends(get_db_session)) -> None:
     raise NotImplementedError()
 
-@route.get("/{product_id}", status_code=200)
+@router.get("/{product_id}", status_code=200)
 def get_product(product_id: int,
                 session: Session = Depends(get_db_session)) -> ProductResponse:
     raise NotImplementedError()
 
 # ?: 업로드 가능한 이미지의 개수에 제한을 둘 것인가?
 # ?: 이미지는 한 번에 여러 개 업로드 가능하게 만들 것인가?
-@route.put("/{product_id}/image", status_code=200)
+@router.put("/{product_id}/image", status_code=200)
 def update_product_image(product_id: int,
                          image_URIs: List[str],
                          session: Session = Depends(get_db_session)) -> None:
     raise NotImplementedError()
 
 # !: 문서에서 이미지 제거 라우터 누락됨 => 이미지 제거 라우터 추가
-@route.delete("/{product_id}/image", status_code=200)
+@router.delete("/{product_id}/image", status_code=200)
 def delete_product_image(product_id: int,
                          image_id: int,
                          session: Session = Depends(get_db_session)) -> None:

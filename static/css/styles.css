@@ -1,0 +1,200 @@
+/* 기본 스타일 */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f7f7f7;
+}
+
+header {
+    background-color: #ff7f40; /* 당근 색상 */
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header .logo h1 {
+    color: white;
+    font-size: 24px;
+    margin: 0;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* 배너 스타일 */
+.banner {
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+}
+
+.banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 상품 목록 */
+main {
+    padding: 20px;
+}
+
+h2 {
+    font-size: 1.8em;
+    margin: 20px 0;
+}
+
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-10px); /* 상품 카드 hover 효과 */
+}
+
+.product-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.product-card h3 {
+    font-size: 1.2em;
+    margin: 15px 0;
+}
+
+.product-card p {
+    color: #ff7f40;
+    font-size: 1.1em;
+}
+
+.view-button {
+    background-color: #ff7f40;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.view-button:hover {
+    background-color: #e56d32;
+}
+
+/* 푸터 */
+footer {
+    background-color: #ff7f40;
+    padding: 15px;
+    text-align: center;
+    color: white;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+.carrot-button {
+    background-color: #ff8c42;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.carrot-button:hover {
+    background-color: #e07b34;
+}
+
+/* my page 관련 css*/
+.profile {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.profile img {
+    border-radius: 50%;
+    width: 150px;
+    height: 150px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    flex-direction: column; /* 버튼을 세로로 정렬 */
+    align-items: center; /* 가운데 정렬 */
+    margin-top: 20px;
+    height: 60vh;
+}
+
+.button-box {
+    background-color: #f8f9fa; /* 연한 배경 */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+    width: 250px; /* 박스 너비 */
+    text-align: center;
+}
+
+.button-container ul {
+    list-style: none;
+    height: 50vh;
+    display: block;
+}
+
+.button-container ul li {
+    margin: 10px; /* 버튼 간격 */
+    height: auto;
+}
+
+.carrot-button {
+    width: 150px; /* 버튼이 부모 너비만큼 */
+    background-color: #ff8c42;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.carrot-button:hover {
+    background-color: #e07b34;
+}
