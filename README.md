@@ -44,3 +44,40 @@ fastapi dev main.py
 
 ## carrot.db
 테스트용 db
+
+## frontend - backend
+```
+homepage  
+│  ├── sign_in    
+│        ├── sign_up   
+│
+├── mypage  
+│  ├── modify_page
+│  ├── my_sales 
+│      ├── regis_product
+│          ├── modify_product
+│              ├── modify_product_img
+│              ├── delete_product_img
+│          ├── delete_product
+│  ├── my_bought
+│  ├── my_likes
+│      ├── delete_likes
+│  ├── delete_account
+│  ├── regis_product
+│
+├── show_products
+│  ├── show_detail_products
+│      ├── add_likes
+│      ├── add_comments
+│          ├── modify_comments
+│          ├── delete_comments
+│  ├── make_chats
+│
+│  ├── show_chats
+│      ├── show_details_chat
+│          ├── chatting
+
+
+
+
+```
