@@ -7,14 +7,10 @@ from typing import Optional
 from datetime import datetime, timezone
 
 class ProductService:
-    def get_product(
-        self, db: Session,
-        product_id: int
-    ) -> Product:
+    def get_product(self, db: Session,product_id: int) -> Product:
         product = db.get(Product, product_id)
         if not product:
             raise HTTPException(status_code=404, detail="Product not found.")
-
         return product
     
     def get_products(
@@ -52,13 +48,13 @@ class ProductService:
         ).all()
         return products
     
-    def create_product(self, db: Session,productRequest: ProductRequest) -> Product:
+    def create_product(self, db: Session, productRequest: ProductRequest, user: User) -> Product:
         product = Product(
             title=productRequest.title,
             content=productRequest.content,
             price=productRequest.price,
             date=datetime.now(tz=timezone.utc),
-            user_id=productRequest.user_id,
+            user_id=user.id,
             category_id=productRequest.category_id,
             soldout=False,
             heart_count=0
@@ -68,21 +64,16 @@ class ProductService:
         db.refresh(product)
         return product
 
-    def update_product(self, db: Session, product_id: int, productRequest: ProductRequest) -> Product:
-        product = db.get(Product, product_id)
-        if not product:
-            raise HTTPException(status_code=404, detail="Product not found.")
-        if product.user_id != productRequest.user_id:
-            raise HTTPException(status_code=403, detail="User does not have permission.")
-        product.sqlmodel_update(productRequest.model_dump())
+    def update_product(self, db: Session, productRequest: ProductRequest, product: Product) -> Product:
+        product.sqlmodel_update(productRequest.model_dump(exclude_unset=True))
+        product.date = datetime.now(tz=timezone.utc)
         db.commit()
         db.refresh(product)
         return product
     
-    def delete_product(self, db: Session, product_id: int) -> None:
-        product = db.get(Product, product_id)
-        if not product:
-            raise HTTPException(status_code=404, detail="Product not found.")
+    def delete_product(self, db: Session, product: Product) -> None:
+        
+        self.delete_all_product_images(db, product.id)
         db.delete(product)
         db.commit()
         return None
@@ -94,61 +85,58 @@ class ProductService:
             raise HTTPException(status_code=400, detail="File type not allowed.")
         if not file_content:
             raise HTTPException(status_code=400, detail="Empty file.")
+        
         return file_name, file_content
 
     def upload_product_image(
         self, db: Session, product_id: int, image: UploadFile, background_tasks: BackgroundTasks,
     ) -> ProductImage:
-        product = db.get(Product, product_id)
-        if not product:
-            raise HTTPException(status_code=404, detail="Product not found.")
         file_name, file_content = self.validate_image(image)
 
         background_tasks.add_task(save_file, file_name, file_content)
 
-        productImage = ProductImage(product_id=product.id, image_URI=file_name)
+        productImage = ProductImage(product_id=product_id, image_URI=file_name)
         db.add(productImage)
         db.commit()
         db.refresh(productImage)
 
         return productImage
     
-    def get_product_images(self, db: Session, product_id: int) -> list[ProductImage]:
-        product = db.get(Product, product_id)
-        if not product:
-            raise HTTPException(status_code=404, detail="Product not found.")
-        productImages = db.exec(
-            select(ProductImage)
-            .where(ProductImage.product_id == product_id)
-        ).all()
-        return productImages
-    
-    def delete_product_image(self, db: Session, product_id: int, image_id: int) -> None:
-        productImage = db.exec(
+    def get_product_image(self, db: Session, product_id: int, image_id: int) -> ProductImage:
+        product_image = db.exec(
             select(ProductImage).where(
                 ProductImage.product_id == product_id, 
                 ProductImage.id == image_id
             )
         ).first()
-        if not productImage:
+        if not product_image:
             raise HTTPException(status_code=404, detail="ProductImage not found.")
-        db.delete(productImage)
-        if delete_file(productImage.image_URI):
-            db.commit()
-        else:
-            db.rollback()
-            raise HTTPException(status_code=500, detail="Failed to delete file.")
+        
+        return product_image
     
-    def delete_all_product_images(self, db: Session, product_id: int) -> None:
-        product = db.get(Product, product_id)
-        if not product:
-            raise HTTPException(status_code=404, detail="Product not found.")
-        productImages = db.exec(
+    def get_product_images(self, db: Session, product_id: int) -> list[ProductImage]:
+        product_images = db.exec(
             select(ProductImage)
             .where(ProductImage.product_id == product_id)
         ).all()
-        for productImage in productImages:
-            db.delete(productImage)
-            delete_file(productImage.image_URI)
+
+        return product_images
+    
+    def delete_product_image(self, db: Session, product_image: ProductImage) -> None:
+        file_deleted = delete_file(product_image.image_URI)
+        if not file_deleted:
+            # raise HTTPException(status_code=500, detail="Failed to delete file.")
+            print(f"Warning: Failed to delete file {product_image.image_URI}")
+        db.delete(product_image)
+        db.commit()
+    
+    def delete_all_product_images(self, db: Session, product_id: int) -> None:
+        product_images = self.get_product_images(db, product_id)
+        for product_image in product_images:
+            file_deleted = delete_file(product_image.image_URI)
+            if not file_deleted:
+                # raise HTTPException(status_code=500, detail="Failed to delete file.")
+                print(f"Warning: Failed to delete file {product_image.image_URI}")
+            db.delete(product_image)
         db.commit()
         return None
