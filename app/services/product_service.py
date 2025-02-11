@@ -1,6 +1,6 @@
 # app/services/product_service.py
 from app.models.user_and_product_model import *
-from app.dependency.io import save_UploadFile, delete_file
+from app.io import save_UploadFile, delete_file
 from fastapi import UploadFile, HTTPException
 from sqlmodel import Session, select
 from typing import Optional
