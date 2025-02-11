@@ -89,8 +89,7 @@ class ProductRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
     content: str = Field(..., min_length=1, max_length=1000)
     price: int = Field(..., ge=0)
-    user_id: int = Field(..., ge=0)
-    category_id: int = Field(..., ge=0)
+    category_id: int = Field(..., ge=0) # TODO: validate category_id
 
 class ProductResponse(BaseModel):
     product: Product
