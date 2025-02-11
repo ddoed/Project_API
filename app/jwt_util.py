@@ -13,7 +13,12 @@ class JWTUtil:
     # 2. token 문자열로 payload 만드는 함수
     def decode_token(self, token:str)->dict|None:
         try:
-            payload = jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHMS])
+            payload = jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHMS], options={"verify_exp": True})
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token expired")
+        except jwt.JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")
             if payload is not None:
                 nNow = int(time.time())
                 nExpireAt = payload.get('exp', 0)

@@ -58,6 +58,14 @@ class AuthService:
         
         return dbUser #검증 성공
     
+    def authenticate_user(self, db: Session, login_id: str, password: str):
+        user = self.get_user_by_name(db, login_id)
+        if not user:
+            return None
+        if not self.verify_pwd(password, user.password):  # 수정: self.verify_pwd 사용
+            return None
+        return user
+
 #해시 변환 확인용
 if __name__=='__main__':
     authService = AuthService()
@@ -67,3 +75,5 @@ if __name__=='__main__':
     bRet=authService.verify_pwd('1234',Pwd)
     print(bRet)
     #python C:\Users\parkj\OneDrive\바탕 화면\JWT\app\auth_service.py
+    
+    
