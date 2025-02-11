@@ -20,7 +20,8 @@ def create_chatroom(product_id:int, reqChat: ReqChatroom,
     # user_id를 body로 받도록 함
     new_chatroom = ChatRoom(product_id=product_id,
                             chat_seller=product.user_id,
-                            chat_buyer=reqChat.user_id
+                            chat_buyer=reqChat.user_id,
+                            created_at=datetime.now()
     )
     session.add(new_chatroom)
     session.commit()
