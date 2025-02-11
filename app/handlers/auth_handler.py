@@ -1,7 +1,7 @@
 # app/handlers/auth_handler.py
 from app.models.chat_models import *
 from fastapi import APIRouter, HTTPException, Depends, status
-from app.dependency.db import get_db_session
+from app.db import get_db_session
 from app.models.auth_models import *
 from app.jwt_util import JWTUtil
 from app.services.auth_service import AuthService

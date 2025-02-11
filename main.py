@@ -4,8 +4,8 @@
 # // 해결한 사항
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.dependency.db import create_db_and_tables
-from app.dependency.io import *
+from app.db import create_db_and_tables
+from app.io import *
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from app.handlers import (auth_handler,

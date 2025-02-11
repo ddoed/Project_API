@@ -1,4 +1,4 @@
-# app/dependency/io.py
+# app/io.py
 from fastapi import UploadFile
 import os
 import uuid

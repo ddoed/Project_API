@@ -1,6 +1,6 @@
 # app/handlers/product_handler.py
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Path, Body
-from app.dependency.db import get_db_session
+from app.db import get_db_session
 from app.models.auth_models import *
 from app.models.user_and_product_model import *
 from app.services.product_service import ProductService

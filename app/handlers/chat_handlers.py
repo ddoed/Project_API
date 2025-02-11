@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
 from app.models.chat_models import *
 from app.models.user_and_product_model import *
-from app.dependency.db import get_db_session
+from app.db import get_db_session
 
 router = APIRouter()
 

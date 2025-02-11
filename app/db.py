@@ -1,4 +1,4 @@
-# #app/dependency/db.py
+# #app/db.py
 from sqlmodel import Session, create_engine, SQLModel
 
 # 데이터베이스 URL 설정 (여기서는 SQLite 사용)
