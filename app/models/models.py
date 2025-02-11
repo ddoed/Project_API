@@ -2,18 +2,22 @@ from sqlmodel import Field, SQLModel, Relationship
 from typing import Optional, List
 from pydantic import BaseModel
 from datetime import *
+from sqlalchemy import Column, Integer, String
 # * back_populates로 양방향 관계 설정
 
-class User(SQLModel, table=True):
-    id: Optional[int] = Field(primary_key=True)
-    email: str = Field(unique=True)
-    password: str
-    username: str
-    role: str
 
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    login_id: str = Field(index=True)
+    email: str = Field(unique=True)
+    password: str = Field(default=None, exclude=True)
+    username: str
+    role: str = Field(default="user")
     products: List["Product"] = Relationship(back_populates="user")
     likes: List["Likes"] = Relationship(back_populates="user")
     comments: List["Comment"] = Relationship(back_populates="user")
+    access_token: str | None = None
+    created_at: int | None = Field(index=True) 
     # ! User 모델에서 purchases 관계가 없는데, Purchase 모델에서 user와의 관계를 설정하려고 했기 때문에 에러 발생
     # // User 모델에 purchases Relationship을 추가하여, 에러를 해결함
     purchases: List["Purchase"] = Relationship(back_populates="user")
@@ -21,7 +25,7 @@ class User(SQLModel, table=True):
 # Request body에서 받을 데이터를 위한 Pydantic 모델 정의
 class user_LikeRequest(BaseModel):
     user_id: int  # 사용자의 ID
-
+    
 class Category(SQLModel, table=True):
     # * id 자동생성, 증가하는 숫자
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -43,7 +47,7 @@ class Product(SQLModel, table=True):
     category_id: int = Field(foreign_key="category.id")
     soldout: bool = False
 
-
+    purchases: List["Purchase"] = Relationship(back_populates="product") #임시 추가
     user: User = Relationship(back_populates="products")
     category: Category = Relationship(back_populates="products")
     images: List["ProductImage"] = Relationship(back_populates="product")
