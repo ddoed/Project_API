@@ -10,12 +10,13 @@ from app.jwt_util import JWTUtil
 from app.services.auth_service import AuthService
 from app.models.parameter_models import *
 from sqlmodel import select,Session
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 
 router = APIRouter(
     prefix="/users"
 )
-oauth2_scheme =OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme =OAuth2PasswordBearer(tokenUrl="/users/token")
+
 
 # 현재 로그인한 사용자를 가져오는 의존성 함수
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db_session)):
@@ -27,18 +28,44 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user_id: int = payload.get("id")
+    user_id: int = payload.get("id")  # 수정: "id"를 추출
     if user_id is None:
         raise HTTPException(
             status_code=404,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user = db.get(User, user_id)
+    user = db.get(User, user_id)  # 수정: user_id (id)를 사용하여 조회
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
+@router.post("/token")
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db_session),
+    auth_service: AuthService = Depends(),
+    jwt_util: JWTUtil = Depends()
+):
+    user = auth_service.authenticate_user(db, form_data.username, form_data.password)  # 수정: form_data.username 사용
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # JWT 토큰 생성
+    payload = {
+        "id": user.id,
+        "login_id": user.login_id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "created_at": user.created_at
+    }
+    access_token = jwt_util.create_token(payload)
+    return {"access_token": access_token, "token_type": "bearer"}
 #회원가입
 @router.post("/signup")
 async def auth_signup(req:AuthSignupReq,
