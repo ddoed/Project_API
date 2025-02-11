@@ -2,12 +2,15 @@
 from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.orm import sessionmaker, declarative_base
 from contextlib import contextmanager
-from app.models.models import User, Product, Category, ProductImage, Likes, Comment  # 모델들을 임포트
-from sqlalchemy.ext.asyncio import AsyncSession,create_async_engine
 
+# 모델들을 임포트
+from app.models.models import User, Product, Category, ProductImage, Likes, Comment
+from sqlalchemy.ext.asyncio import AsyncSession,create_async_engine
+from fastapi import UploadFile
 # 데이터베이스 URL 설정 (여기서는 SQLite 사용)
 db_file_name = "carrot.db"
-db_url = f'sqlite:///./{db_file_name}'
+db_url = f"sqlite:///./{db_file_name}"
+
 # 여러 스레드에서 SQLite 연결을 공유할 수 있도록 설정
 db_conn_args = {"check_same_thread": False}
 # 데이터베이스 엔진 생성, 데이터베이스와의 실제 연결 관리
@@ -22,15 +25,27 @@ def get_db_session():
 def create_db_and_tables():
     SQLModel.metadata.create_all(db_engine)
 
+# JSW
+# dependencies.py -> dependencies/io.py, db.py로 모듈화 하면 예쁠 듯듯
+# 팀원과 상의 해야할 듯
+import os
+from typing import Optional
+UPLOAD_DIR = "./uploads"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
 
-# TOK_DB_URL = "postgresql+asyncpg://user:password@localhost/audb"
+async def save_UploadFile(file: UploadFile, filename: str) -> Optional[str]:
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if os.path.exists(file_path):
+        return None
+    with open(file_path, "wb") as file_object:
+        data = await file.read()
+        file_object.write(data)
+    return file_path
 
-# engine = create_async_engine(TOK_DB_URL,echo=True)
-# SessionLocal = sessionmaker(
-#     autocommit = False, autoflush=False,bind=engine, class =AsyncSession
-# )
-# Base = declarative_base()
-
-# async def get_db():
-#     async with SessionLocal() as db:
-#         yield db
+def delete_file(file_path: str) -> bool:
+    if not os.path.exists(file_path):
+        return False
+    
+    os.remove(file_path)
+    return True
