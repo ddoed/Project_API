@@ -1,5 +1,6 @@
 # app/services/product_service.py
 from app.models.user_and_product_model import *
+from app.dependency.io import save_UploadFile, delete_file
 from fastapi import UploadFile, HTTPException
 from sqlmodel import Session, select
 from typing import Optional
@@ -124,14 +125,13 @@ class ProductService:
             db.rollback()
             raise HTTPException(status_code=500, detail="Failed to delete file.")
     
-    ### Decaprecated
-    # def delete_all_product_images(self, db: Session,
-    #                               product_id: int) -> None:
-    #     product = db.get(Product, product_id)
-    #     if not product:
-    #         raise HTTPException(status_code=404, detail="Product not found.")
-    #     for productImage in self.get_product_images(db, product_id):
-    #         db.delete(productImage)
-    #         delete_file(productImage.image_URI)
-    #     db.commit()
-    #     return None
+    def delete_all_product_images(self, db: Session,
+                                  product_id: int) -> None:
+        product = db.get(Product, product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found.")
+        for productImage in self.get_product_images(db, product_id):
+            db.delete(productImage)
+            delete_file(productImage.image_URI)
+        db.commit()
+        return None
