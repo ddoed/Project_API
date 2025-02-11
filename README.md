@@ -1,5 +1,7 @@
 # Project_API
 - FastAPI를 사용한 프로젝트_당근마켓 API 리버싱
+- 백엔드 코드
+- [프론트엔드 코드](https://github.com/ddoed/Project_API-front)
 ---
 ## 프로젝트 참여자
 - 정성우[(qda-sw)](https://github.com/qda-sw)
