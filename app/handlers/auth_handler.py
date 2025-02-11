@@ -1,22 +1,18 @@
-from app.models.models import *
-from fastapi import APIRouter,HTTPException,Depends
-from app.dependencies import get_db_session
-from dataclasses import dataclass
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession,create_async_engine
-from app.models.parameter_models import *
-from app.models.models import *
+# app/handlers/auth_handler.py
+from app.models.chat_models import *
+from fastapi import APIRouter, HTTPException, Depends, status
+from app.dependency.db import get_db_session
+from app.models.auth_models import *
 from app.jwt_util import JWTUtil
 from app.services.auth_service import AuthService
-from app.models.parameter_models import *
-from sqlmodel import select,Session
-from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
+from app.models.user_and_product_model import *
+from sqlmodel import select, Session
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 router = APIRouter(
     prefix="/users"
 )
-oauth2_scheme =OAuth2PasswordBearer(tokenUrl="/users/token")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 
 # 현재 로그인한 사용자를 가져오는 의존성 함수
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db_session)):
@@ -160,6 +156,7 @@ def update_profile(
         "role": current_user.role,
         "created_at": current_user.created_at
     }
+
 # 회원 탈퇴
 @router.delete("/profile")
 def delete_profile(

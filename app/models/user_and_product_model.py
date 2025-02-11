@@ -1,10 +1,10 @@
+# app/models/user_and_product_models.py
+from pydantic import BaseModel, Field
+from enum import Enum
 from sqlmodel import Field, SQLModel, Relationship
 from typing import Optional, List
 from pydantic import BaseModel
 from datetime import *
-from sqlalchemy import Column, Integer, String
-# * back_populates로 양방향 관계 설정
-
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -18,23 +18,17 @@ class User(SQLModel, table=True):
     comments: List["Comment"] = Relationship(back_populates="user")
     access_token: str | None = None
     created_at: int | None = Field(index=True) 
-    # ! User 모델에서 purchases 관계가 없는데, Purchase 모델에서 user와의 관계를 설정하려고 했기 때문에 에러 발생
-    # // User 모델에 purchases Relationship을 추가하여, 에러를 해결함
     purchases: List["Purchase"] = Relationship(back_populates="user")
 
-# Request body에서 받을 데이터를 위한 Pydantic 모델 정의
-class user_LikeRequest(BaseModel):
-    user_id: int  # 사용자의 ID
-    
 class Category(SQLModel, table=True):
-    # * id 자동생성, 증가하는 숫자
+    # id 자동생성, 증가하는 숫자
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
 
     products: List["Product"] = Relationship(back_populates="category")
 
 class Product(SQLModel, table=True):
-    # * id 자동생성, 증가하는 숫자
+    # id 자동생성, 증가하는 숫자
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     content: str
@@ -49,23 +43,18 @@ class Product(SQLModel, table=True):
 
     user: User = Relationship(back_populates="products")
     category: Category = Relationship(back_populates="products")
-    images: List["ProductImage"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete"})
-    likes: List["Likes"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete"})
-    comments: List["Comment"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete"})
-    # ! Product 모델에 purchases라는 관계가 없는데, Purchase 모델에서 Product와의 관계를 설정하려고 했기 때문에 에러 발생
-    # // Product 모델에 purchases Relationship을 추가해서 에러 수정
-    purchases: List["Purchase"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete"})
+    images: List["ProductImage"] = Relationship(back_populates="product", cascade_delete=True)
+    likes: List["Likes"] = Relationship(back_populates="product", cascade_delete=True)
+    comments: List["Comment"] = Relationship(back_populates="product", cascade_delete=True)
+    purchases: List["Purchase"] = Relationship(back_populates="product", cascade_delete=True)
 
 
 class ProductImage(SQLModel, table=True):
-    # * 하나의 게시물에 여러개의 사진이 연결될 수 있도록 id를 설정
+    # 하나의 게시물에 여러개의 사진이 연결될 수 있도록 id를 설정
     id: Optional[int] = Field(default=None, primary_key=True)
     product_id: int = Field(foreign_key="product.id")
     image_URI: str
 
-    # ! ProductImage에서 User와의 관계가 없어서 에러 발생
-    # // 주석 처리로 해결
-    #user: User = Relationship(back_populates="purchases")
     product: Product = Relationship(back_populates="images")
 
 class Likes(SQLModel, table=True):
@@ -96,20 +85,24 @@ class Purchase(SQLModel, table=True):
     user: User = Relationship(back_populates="purchases")
     product: Product = Relationship(back_populates="purchases")
 
-# 채팅방 모델
-class ChatRoom(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    product_id: int = Field(foreign_key="product.id")
-    created_at: datetime
-    # host guest에서 seller, buyer로 이름 변경
-    chat_seller: int = Field(foreign_key="user.id")
-    chat_buyer: int = Field(foreign_key="user.id")
+class ProductRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100)
+    content: str = Field(..., min_length=1, max_length=1000)
+    price: int = Field(..., ge=0)
+    user_id: int = Field(..., ge=0)
+    category_id: int = Field(..., ge=0)
 
-# 메세지 모델
-class Message(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    chatroom_id: int = Field(foreign_key="chatroom.id")
-    sender_id: int = Field(foreign_key="user.id")
-    receiver_id: int = Field(foreign_key="user.id")
+class ProductResponse(BaseModel):
+    product: Product
+    productImages: list[ProductImage]
+
+class ProductSortType(Enum):
+    ACCURACY = 0
+    LATEST = 1
+
+class ReqComment(BaseModel):
+    user_id: int
     content: str
-    sent_at: datetime
+
+class RespComments(BaseModel):
+    comments : list[Comment]

@@ -1,15 +1,13 @@
 # 아래 코드들 작업 설명
-# * 코드 한줄 작동 방식 설명
 # ! 주의사항이나 에러가 발생해 수정이 필요한 사항에 추가
 # ? 궁금점이나 수정이 필요한 부분이 있는 경우
 # // 해결한 사항
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from sqlmodel import Session, select
-from app.dependencies import get_db_session, create_db_and_tables
-from app.models.models import User, Product, Category, ProductImage, Likes, Comment, Purchase  # 모델들을 불러옵니다.
-from pydantic import BaseModel
+from app.dependency.db import create_db_and_tables
+from app.dependency.io import *
+import os
+from fastapi.middleware.cors import CORSMiddleware
 from app.handlers import (auth_handler,
                           chat_handlers,
                           comment_handlers,
@@ -21,42 +19,27 @@ app = FastAPI()
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    create_upload_dir()
 
 app.include_router(auth_handler.router)
 app.include_router(chat_handlers.router)
 app.include_router(comment_handlers.router)
 app.include_router(product_handler.router)
 
-# 정적 파일 (CSS, JS, 이미지 등) 제공
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# HTML 템플릿 설정
-templates = Jinja2Templates(directory="templates")
+# ? react 사용을 위한 CORS 설정
+# # 허용할 출처(origin) 목록
+# origins = [
+#     "http://localhost:3000",  # React 개발 서버
+#     "http://127.0.0.1:3000",  # 로컬호스트 IP
+#     "https://yourdomain.com",  # 실제 배포된 프론트엔드 URL (필요 시 추가)
+# ]
 
-# 정적 파일을 서빙할 static 폴더 등록
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "title": "홈페이지"})
-
-@app.get("/my_page")
-async def my_page(request: Request):
-    user_data = {
-        "name": "홍길동",
-        "email": "hong@example.com",
-        "profile_pic": "https://via.placeholder.com/150"
-    }
-    return templates.TemplateResponse("my_page.html", {"request": request, "user": user_data})
-
-@app.get("/sales_list")
-async def sales_list(request: Request):
-    return templates.TemplateResponse("sales_list.html", {"request": request})
-
-@app.get("/bought_list")
-async def bought_list(request: Request):
-    return templates.TemplateResponse("bought_list.html", {"request": request})
-
-@app.get("/likes_list")
-async def likes_list(request: Request):
-    return templates.TemplateResponse("likes_list.html", {"request": request})
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,  # 허용할 도메인 목록
+#     allow_credentials=True,  # 쿠키 포함 여부
+#     allow_methods=["*"],  # 허용할 HTTP 메서드 (GET, POST, PUT 등)
+#     allow_headers=["*"],  # 허용할 HTTP 헤더
+# )

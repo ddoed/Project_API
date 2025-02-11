@@ -1,4 +1,5 @@
 from datetime import datetime,timedelta,timezone
+from fastapi import HTTPException
 from jose import jwt
 
 SECRET_KEY = "1234"
@@ -10,6 +11,7 @@ class JWTUtil:
         expire = datetime.now(timezone.utc) + expires_delta
         payload_to_encode.update({'exp': expire})
         return jwt.encode (payload_to_encode,SECRET_KEY,algorithm=ALGORITHMS)
+
     # 2. token 문자열로 payload 만드는 함수
     def decode_token(self, token:str)->dict|None:
         try:
@@ -19,12 +21,4 @@ class JWTUtil:
             raise HTTPException(status_code=401, detail="Token expired")
         except jwt.JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
-            if payload is not None:
-                nNow = int(time.time())
-                nExpireAt = payload.get('exp', 0)
-                if nExpireAt < nNow:
-                    return None
-        except:
-            pass
-        return None
     

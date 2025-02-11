@@ -1,20 +1,12 @@
-from dataclasses import dataclass
+# app/handlers/comment_handler.py
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlmodel import select
-from app.models.models import Comment
-from app.dependencies import get_db_session
+from app.models.user_and_product_model import *
+from app.dependency.db import get_db_session
 
 router = APIRouter(
     prefix="/products"
 )
-
-class ReqComment(BaseModel):
-    user_id: int
-    content: str
-
-class RespComments(BaseModel):
-    comments : list[Comment]
 
 # 댓글 목록 조회
 # 임시로 limit 10으로 설정
@@ -49,6 +41,7 @@ def update_comment(product_id: int, comment_id: int,
     session.refresh(comment)
     return RespComments(comments=[comment])
 
+# ! product_id 사용 안하는데 빼버릴까요?
 # 댓글 삭제
 @router.delete("/{product_id}/comments/{comment_id}", status_code=200)
 def delete_comment(product_id: int, comment_id: int,

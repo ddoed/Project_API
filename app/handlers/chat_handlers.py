@@ -1,20 +1,11 @@
-from dataclasses import dataclass
+# app/handlers/chat_handler.py
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlmodel import select
-from app.models.models import ChatRoom, Product, Message
-from app.dependencies import get_db_session
+from app.models.chat_models import *
+from app.models.user_and_product_model import *
+from app.dependency.db import get_db_session
 
 router = APIRouter()
-
-class ReqChatroom(BaseModel):
-    user_id: int
-
-class RespChatRoom(BaseModel):
-    chatrooms : list[ChatRoom]
-
-class RespChats(BaseModel):
-    messages: list[Message]
 
 # 채팅방 생성
 @router.post("/products/{product_id}/chats")

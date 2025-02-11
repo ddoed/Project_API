@@ -1,7 +1,8 @@
+# app/services/auth_service.py
 import bcrypt
 import time
 from sqlmodel import Session,select
-from app.models.models import User
+from app.models.user_and_product_model import User
 from fastapi import HTTPException
 
 class AuthService:
@@ -66,14 +67,14 @@ class AuthService:
             return None
         return user
 
-#해시 변환 확인용
-if __name__=='__main__':
-    authService = AuthService()
-    hashedPwd = authService.get_hashed_pwd('1234')
-    print(hashedPwd)
-    #hashedPwd -> DB
-    bRet=authService.verify_pwd('1234',Pwd)
-    print(bRet)
-    #python C:\Users\parkj\OneDrive\바탕 화면\JWT\app\auth_service.py
+# #해시 변환 확인용
+# if __name__=='__main__':
+#     authService = AuthService()
+#     hashedPwd = authService.get_hashed_pwd('1234')
+#     print(hashedPwd)
+#     #hashedPwd -> DB
+#     bRet=authService.verify_pwd('1234',Pwd)
+#     print(bRet)
+#     #python C:\Users\parkj\OneDrive\바탕 화면\JWT\app\auth_service.py
     
     
