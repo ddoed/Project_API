@@ -115,6 +115,7 @@ def update_product(product: ProductRequest = Body(...),
 def delete_product(product_id: int = Path(..., ge=0),
                    db: Session = Depends(get_db_session),
                    productService: ProductService = Depends()) -> None:
+    productService.delete_all_product_images(db, product_id)
     productService.delete_product(db, product_id)
     return None
 
