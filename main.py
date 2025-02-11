@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from app.handlers import (auth_handler,
                           chat_handlers,
                           comment_handlers,
-                          jsw_need_to_validate)
+                          product_handler)
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
@@ -25,7 +25,7 @@ def on_startup():
 app.include_router(auth_handler.router)
 app.include_router(chat_handlers.router)
 app.include_router(comment_handlers.router)
-app.include_router(jsw_need_to_validate.router)
+app.include_router(product_handler.router)
 
 # 정적 파일 (CSS, JS, 이미지 등) 제공
 app.mount("/static", StaticFiles(directory="static"), name="static")
