@@ -26,7 +26,7 @@ app.include_router(chat_handlers.router)
 app.include_router(comment_handlers.router)
 app.include_router(product_handler.router)
 
-# app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # ? react 사용을 위한 CORS 설정
 # # 허용할 출처(origin) 목록
