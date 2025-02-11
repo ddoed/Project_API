@@ -1,10 +1,12 @@
 # app/handlers/product_handler.py
-from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Path, Body
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Query, UploadFile, File, Path, Body
 from app.db import get_db_session
 from app.models.auth_models import *
 from app.models.user_and_product_model import *
 from app.services.product_service import ProductService
+from app.handlers.auth_handler import get_current_user
 from sqlmodel import Session, select
+from typing import Annotated
 
 router = APIRouter(
     prefix="/products"
@@ -63,75 +65,106 @@ def delete_product_likes(product_id: int, delete_request: user_LikeRequest, db: 
 
     return {"message": "Like deleted successfully", "like_id": like_to_delete.id, "liker_id": like_to_delete.user_id}
     
+
+def validate_product_id(
+    product_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
+) -> Product:
+    product = productService.get_product(db, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found.")
+    return product
+
+def validate_product_owner(
+    product: Product = Depends(validate_product_id),
+    current_user: User = Depends(get_current_user),
+) -> Product:
+    if current_user.id != product.user_id:
+        raise HTTPException(status_code=403, detail="User does not have permission.")
+    return product
+
 @router.get("/", status_code=200)
-def get_products(q: Optional[str] = Query(None),
-                 category_id: Optional[int] = Query(None),
-                 soldout: Optional[bool] = Query(None),
-                 min_price: Optional[int] = Query(None, ge=0),
-                 max_price: Optional[int] = Query(None, ge=0),
-                 sort_type: int = Query(ProductSortType.ACCURACY),
-                 page: int = Query(0, ge=0),
-                 limit: int = Query(10, le=100),
-                 db: Session = Depends(get_db_session),
-                 productService: ProductService = Depends()
+def get_products(
+    q: Optional[str] = Query(None),
+    category_id: Optional[int] = Query(None),
+    soldout: Optional[bool] = Query(None),
+    min_price: Optional[int] = Query(None, ge=0),
+    max_price: Optional[int] = Query(None, ge=0),
+    sort_type: int = Query(ProductSortType.ACCURACY),
+    page: int = Query(0, ge=0),
+    limit: int = Query(10, le=100),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
 ) -> list[ProductResponse]:
     products = productService.get_products(db, q, category_id, soldout, min_price, max_price, sort_type, page, limit)
-    productImagesList = [
-        productService.get_product_images(db, product.id) for product in products
+    result = [
+        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id)) for product in products 
     ]
-    result = map(
-            lambda product, productImages: ProductResponse(product=product, productImages=productImages),
-            products, productImagesList
-    )
-    return list(result)
+    return result
 
 @router.post("/", status_code=201)
-def create_product(productRequest: ProductRequest = Body(...),
-                         db: Session = Depends(get_db_session),
-                         productService: ProductService = Depends()
+def create_product(
+    productRequest: ProductRequest = Body(...),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
 ) -> ProductResponse:
     product = productService.create_product(db, productRequest)
     return ProductResponse(product=product, productImages=[])
 
 @router.get("/{product_id}", status_code=200)
-def get_product(product_id: int = Path(..., ge=0),
-                db: Session = Depends(get_db_session),
-                productService: ProductService = Depends()
+def get_product(
+    product_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
 ) -> ProductResponse:
     product = productService.get_product(db, product_id)
     productImage = productService.get_product_images(db, product_id)
     return ProductResponse(product=product, productImages=productImage)
 
 @router.put("/{product_id}", status_code=200)
-def update_product(product: ProductRequest = Body(...),
-                   product_id: int = Path(..., ge=0),
-                   db: Session = Depends(get_db_session),
-                   productService: ProductService = Depends()) -> ProductResponse:
+def update_product(
+    product: ProductRequest = Body(...),
+    product_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends(),
+                   
+) -> ProductResponse:
     product = productService.update_product(db, product_id, product)
     productImage = productService.get_product_images(db, product_id)
     return ProductResponse(product=product, productImages=productImage)
 
 @router.delete("/{product_id}", status_code=204)
-def delete_product(product_id: int = Path(..., ge=0),
-                   db: Session = Depends(get_db_session),
-                   productService: ProductService = Depends()) -> None:
+def delete_product(
+    product_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
+) -> None:
     productService.delete_all_product_images(db, product_id)
     productService.delete_product(db, product_id)
     return None
 
 @router.post("/{product_id}/image", status_code=200)
-async def upload_product_image(product_id: int = Path(..., ge=0),
-                         image: UploadFile = File(...),
-                         db: Session = Depends(get_db_session),
-                         productService: ProductService = Depends()
+def upload_product_image(
+    background_tasks: BackgroundTasks,
+    product_id: int = Path(..., ge=0),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
 ) -> ProductImage:
-    return await productService.upload_product_image(db, product_id, image)
+    return productService.upload_product_image(
+        db=db,
+        product_id=product_id, 
+        image=image,
+        background_tasks=background_tasks
+    )
 
 @router.delete("/{product_id}/image/{image_id}", status_code=204)
-def delete_product_image(product_id: int = Path(..., ge=0),
-                         image_id: int = Path(..., ge=0),
-                         db: Session = Depends(get_db_session),
-                         productService: ProductService = Depends()
+def delete_product_image(
+    product_id: int = Path(..., ge=0),
+    image_id: int = Path(..., ge=0),
+    db: Session = Depends(get_db_session),
+    productService: ProductService = Depends()
 ) -> None:
     productService.delete_product_image(db, product_id, image_id)
     return None
