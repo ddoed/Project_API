@@ -26,22 +26,23 @@
 ```
 > CMD
 가상환경 구성
-- python -m venv .venv
+python -m venv .venv
 
 가상환경 실행
--  .venv\Scripts\activate.bat
+.venv\Scripts\activate.bat
 
 라이브러리 설치
 pip install "fastapi[standard]"
-pip install SQLModel
+pip install bcrypt
+pip install sqlmodel
+pip install python-jose
+pip install pydantic
+pip install python-dotenv
+pip install websockets
 
 서버 실행
 fastapi dev main.py
 ```
-## 해야할 일
-1. models.py 내부 모듈 사용 부분 분할(user, product, comment...)
-2. jsw_need_val...py 모듈 테스트 후 각 handler 내부로 분할 (정성우님)
-3. 관련 코드 테스트 후 notion에 api 결과 작성(박지은님)
 
 ## carrot.db
 테스트용 db
