@@ -9,6 +9,15 @@ router = APIRouter(
     prefix="/products"
 )
 
+@router.get("/{product_id}/likes", status_code=200)
+def get_product_like_status(product_id: int, user_id: int, db: Session = Depends(get_db_session)):
+    """사용자가 특정 상품을 좋아요 했는지 여부 확인"""
+    existing_like = db.exec(
+        select(Likes).where(Likes.user_id == user_id, Likes.product_id == product_id)
+    ).first()
+
+    return {"liked": existing_like is not None}
+
 # 물건에 좋아요 추가
 @router.post("/products/{product_id}/likes")
 def post_product_likes_add(product_id: int, like_request: user_LikeRequest, db: Session = Depends(get_db_session)):
