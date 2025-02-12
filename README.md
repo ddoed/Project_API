@@ -81,7 +81,33 @@ homepage
 │      ├── show_details_chat
 │          ├── chatting
 
-
-
-
 ```
+---
+## ws로 채팅방 메세지 보내기 테스트 코드
+const chatroomId = 1; // 존재하는 채팅방 ID로 변경하세요
+const ws = new WebSocket(`ws://localhost:8000/chats/${chatroomId}/message`);
+
+ws.onopen = () => {
+    console.log('WebSocket 연결 성공');
+
+    // 클라이언트가 보내는 JSON 형식 메시지
+    const message = {
+        sender_id: 2, // sender_id는 유효한 사용자 ID여야 합니다
+        content: "백엔드 공부 파이팅" // 보낼 메시지 내용
+    };
+
+    // JSON 메시지를 서버로 전송
+    ws.send(JSON.stringify(message));
+};
+
+ws.onmessage = (event) => {
+    console.log('서버에서 받은 메시지:', event.data);
+};
+
+ws.onerror = (error) => {
+    console.error('WebSocket 에러:', error);
+};
+
+ws.onclose = () => {
+    console.log('WebSocket 연결 종료');
+};

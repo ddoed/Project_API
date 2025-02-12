@@ -11,20 +11,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.handlers import (auth_handler,
                           chat_handlers,
                           comment_handlers,
-                          product_handler)
+                          product_handler,
+                          ws_handler)
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
-
+# app.on_event내부에 create_upload_dir()이 있는 경우
+# fastapi가 실행이 되어야 아래 코드가 실행
+# 그러나 아래 app.mount가 더 먼저 수행되고 fastapi를 실행시키므로
+# 코드를 밖으로 빼서 먼저 수행이 되도록 처리
+create_upload_dir()
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
-    create_upload_dir()
 
 app.include_router(auth_handler.router)
 app.include_router(chat_handlers.router)
 app.include_router(comment_handlers.router)
 app.include_router(product_handler.router)
+app.include_router(ws_handler.router)
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 

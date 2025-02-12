@@ -41,6 +41,9 @@ def post_product_likes_add(product_id: int, like_request: user_LikeRequest, db: 
     # 좋아요 추가
     new_like = Likes(user_id=user_id, product_id=product_id)
     db.add(new_like)
+    
+    # product모델에 좋아요 개수 추가
+    product.heart_count += 1
     db.commit()
     # 새로운 객체가 추가되어 데이터베이스에 남아 있으므로 refresh 수행
     db.refresh(new_like)
@@ -52,6 +55,12 @@ def post_product_likes_add(product_id: int, like_request: user_LikeRequest, db: 
 def delete_product_likes(product_id: int, delete_request: user_LikeRequest, db: Session = Depends(get_db_session)):
     user_id = delete_request.user_id
 
+    # 상품이 존재하는지 확인
+    product = db.get(Product, product_id)
+    if not product:
+        #상품이 없는경우, 에러 메세지 출력
+        raise HTTPException(status_code=404, detail="Product not found")
+    
     # 사용자가 해당 상품에 좋아요를 눌렀는지 확인
     like_to_delete = db.exec(select(Likes).where(Likes.user_id == user_id, Likes.product_id == product_id)).first()
     # 좋아요 한 적이 없는 경우 에러 메세지 출력
@@ -60,6 +69,9 @@ def delete_product_likes(product_id: int, delete_request: user_LikeRequest, db: 
     
     # 좋아요 삭제
     db.delete(like_to_delete)
+
+    # product모델에 좋아요 개수 감소
+    product.heart_count -= 1
     db.commit()
 
     return {"message": "Like deleted successfully", "like_id": like_to_delete.id, "liker_id": like_to_delete.user_id}
