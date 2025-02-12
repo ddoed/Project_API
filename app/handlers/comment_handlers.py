@@ -25,7 +25,7 @@ def get_comments(
 # 댓글 생성 (인증 필요)
 @router.post("/", status_code=201)
 def create_comment(
-    product_id: int, 
+    product_id: int = Body(...), 
     content: str = Body(..., description="댓글 내용"),
     current_user: User = Depends(get_current_user),
     session = Depends(get_db_session)
