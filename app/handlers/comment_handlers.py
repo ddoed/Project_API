@@ -1,21 +1,21 @@
 # app/handlers/comment_handler.py
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlmodel import select
 from app.handlers.auth_handler import get_current_user
 from app.models.user_and_product_model import *
 from app.db import get_db_session
 from app.services.comment_service import CommentService
 
-router = APIRouter(prefix="/products")
-comment_service = CommentService
+router = APIRouter(prefix="/comments")
+comment_service = CommentService()
 
 # 댓글 목록 조회
-# limit 10으로 설정
+# limit 10
 # 인증 불필요
-@router.get("/{product_id}/comments", status_code=200)
+@router.get("/", status_code=200)
 def get_comments(
-    product_id: int,
-    limit: int=10, 
+    product_id: int = Query(..., description="조회할 상품의 ID"),
+    limit: int = Query(10, le=10, description="최대 조회 개수"),
     session=Depends(get_db_session)
     ) -> RespComments:
 
@@ -23,7 +23,7 @@ def get_comments(
     return RespComments(comments=comments)
 
 # 댓글 생성 (인증 필요)
-@router.post("/{product_id}/comments", status_code=201)
+@router.post("/", status_code=201)
 def create_comment(
     product_id: int, 
     content: str = Body(..., description="댓글 내용"),
@@ -34,12 +34,9 @@ def create_comment(
     new_comment = comment_service.create_comment(session, product_id, current_user.id, content)
     return RespComments(comments=[new_comment])
 
-# (주의) product_id는 수정, 삭제에 사용되지 않지만 Path의 일관성을 위해
-
 # 댓글 수정 (인증 필요)
-@router.put("/{product_id}/comments/{comment_id}", status_code=200)
+@router.put("/{comment_id}", status_code=200)
 def update_comment(
-    product_id: int, 
     comment_id: int,
     content: str = Body(..., description="수정할 댓글 내용"),
     current_user: User = Depends(get_current_user),
@@ -51,9 +48,8 @@ def update_comment(
 
 
 # 댓글 삭제 (인증 필요)
-@router.delete("/{product_id}/comments/{comment_id}", status_code=200)
+@router.delete("/{comment_id}", status_code=200)
 def delete_comment(
-    product_id: int, 
     comment_id: int,
     current_user: User = Depends(get_current_user),
     session = Depends(get_db_session)):
