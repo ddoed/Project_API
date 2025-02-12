@@ -51,7 +51,8 @@ def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # JWT 토큰 생성
+
+    # ✅ `payload` 정의 추가
     payload = {
         "id": user.id,
         "login_id": user.login_id,
@@ -60,22 +61,22 @@ def login_for_access_token(
         "role": user.role,
         "created_at": user.created_at
     }
-    access_token = jwt_util.create_token(payload)
+
+    access_token = jwt_util.create_token(payload)  # 수정: payload 추가
     return {"access_token": access_token, "token_type": "bearer"}
+
+
 #회원가입
 @router.post("/signup")
 async def auth_signup(req:AuthSignupReq,
-                db=Depends(get_db_session),
-                jwtUtil:JWTUtil=Depends(),
-                authService:AuthService=Depends()):
-    #id 중복 확인
-    # existiong_user = await db.execute(select(User).where(User.login_id==req.login_id))
-    # if existiong_user.scalars().first():
-    #     raise HTTPException(status_code=400, detail="User already exists")
+                      db=Depends(get_db_session),
+                      jwtUtil:JWTUtil=Depends(),
+                      authService:AuthService=Depends()):
+    user = authService.signup(db, req.login_id, req.pwd, req.name, req.email)
 
-    user = authService.signup(db,req.login_id,req.pwd,req.name,req.email)
     if not user:
-        raise HTTPException(status_code=400,detail="error")
+        raise HTTPException(status_code=400, detail="error")
+
     payload = {
         "id": user.id,
         "login_id": user.login_id,
@@ -85,8 +86,15 @@ async def auth_signup(req:AuthSignupReq,
         "created_at": user.created_at
     }
 
-    # JWT 토큰 생성
-    user.access_token = jwtUtil.create_token(payload)
+    # 🔹 토큰 생성
+    token = jwtUtil.create_token(payload)
+
+    # 🔹 DB에 반영되도록 저장
+    user.access_token = token  
+    db.add(user)  # 변경된 객체 추가
+    db.commit()   # DB에 반영
+    db.refresh(user)  # DB에서 최신 상태 불러오기 (flush 역할)
+
     return {
         "id": user.id,
         "login_id": user.login_id,
@@ -94,8 +102,9 @@ async def auth_signup(req:AuthSignupReq,
         "username": user.username,
         "role": user.role,
         "created_at": user.created_at,
-        "access_token": user.access_token
+        "access_token": user.access_token  # ✅ DB에도 반영됨!
     }
+
 # 로그인
 @router.post("/signin")
 def auth_signin(req:AuthLoginReq,
@@ -173,7 +182,8 @@ def delete_profile(
     db.commit()
 
     return {"message": "Profile deleted successfully"}
-# # 내 판매 내역 조회
+
+## 내 판매 내역 조회
 @router.get("/{user_id}/selling")
 def check_my_selling_list(user_id:str,
                           db = Depends(get_db_session)):
@@ -208,3 +218,4 @@ def get_user_likes(user_id: int, db: Session = Depends(get_db_session)):
     results = [db.get(Product, like_product.product_id) for like_product in like_products]
 
     return results
+
