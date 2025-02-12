@@ -10,37 +10,33 @@ from pathlib import Path
 
 # 프로젝트 루트 경로를 기준으로 'uploads' 디렉토리 생성
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
-
-def create_upload_dir():
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
-        
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}
-
-def is_allowed_file(filename: str) -> bool:
+        
+def _is_allowed_file(filename: str) -> bool:
     return '.' in filename and filename.split('.')[-1].lower() in ALLOWED_EXTENSIONS
 
-def unique_filename(filename: str) -> str:
+def _unique_filename(filename: str) -> str:
     ext = filename.split('.')[-1]
     return f"{int(time.time())}_{uuid.uuid4().hex}.{ext}"
 
-async def save_UploadFile(file: UploadFile) -> Optional[str]:
-    if not is_allowed_file(file.filename):
-        return None
+def create_upload_dir():
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    file_name = unique_filename(file.filename)
+def create_file_name(filename: str) -> str:
+    if not _is_allowed_file(filename):
+        return None
+    return _unique_filename(filename)
+
+def save_file(file_name: Path, file_content: bytes) -> None:
     file_path = UPLOAD_DIR / file_name
-    if os.path.exists(file_path):
+    if file_path.exists():
         return None
-
-    with open(file_path, "wb") as file_object:
-        data = await file.read()
-        file_object.write(data)
-    return file_name
+    with open(file_path, "wb") as f:
+        f.write(file_content)
 
 def delete_file(file_name: str) -> bool:
     file_path = UPLOAD_DIR / file_name
-    if not os.path.exists(file_path):
+    if not file_path.exists():
         return False
     os.remove(file_path)
     return True
