@@ -71,7 +71,6 @@ def login_for_access_token(
     }
 
 #회원가입
-#회원가입
 @router.post("/signup")
 async def auth_signup(req:AuthSignupReq,
                       db=Depends(get_db_session),
@@ -140,18 +139,19 @@ def check_profile(user_id: int, db=Depends(get_db_session)):
         "created_at": user.created_at
     }
 
+#프로필 수정
 @router.put("/profile")
 def update_profile(
     update_data: ProfileUpdateRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
-    auth_service: AuthService = Depends()
+    auth_service: AuthService = Depends(),
+    jwt_util: JWTUtil = Depends()
 ):
     # 현재 비밀번호 확인 (비밀번호 변경 시)
     if update_data.password:
-        if not auth_service.verify_password(update_data.current_password, current_user.password):
+        if not auth_service.verify_pwd(update_data.current_password, current_user.password):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
-        # 비밀번호가 맞으면 새로운 비밀번호로 업데이트
         current_user.password = auth_service.get_hashed_pwd(update_data.password)
     
     # 이메일 중복 확인
@@ -175,7 +175,6 @@ def update_profile(
         current_user.login_id = update_data.login_id
     
     try:
-        # 데이터베이스에 변경사항 저장
         db.add(current_user)
         db.commit()
         db.refresh(current_user)
@@ -183,17 +182,28 @@ def update_profile(
         db.rollback()
         raise HTTPException(status_code=500, detail="An error occurred while updating the profile")
     
-    # 업데이트된 사용자 정보 반환 (비밀번호 제외)
+    # 새로운 토큰 생성 (필요한 경우)
+    payload = {
+        "id": current_user.id,
+        "login_id": current_user.login_id,
+        "email": current_user.email,
+        "username": current_user.username,
+        "role": current_user.role,
+        "created_at": str(current_user.created_at)  # datetime -> string 변환 필요
+    }
+    new_access_token = jwt_util.create_token(payload)
+
+    # 업데이트된 사용자 정보와 새 토큰 반환
     return {
         "id": current_user.id,
         "login_id": current_user.login_id,
         "email": current_user.email,
         "username": current_user.username,
         "role": current_user.role,
-        "created_at": current_user.created_at
+        "created_at": str(current_user.created_at),
+        "access_token": new_access_token  # 새 토큰 포함
     }
 
-# 기타 필요한 라우터 및 엔드포인트들...
 
 # 회원 탈퇴
 @router.delete("/profile")
