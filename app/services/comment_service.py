@@ -20,6 +20,7 @@ class CommentService:
         if limit < 1 or limit > 10:
             limit = 10
         comments = db.exec(select(Comment).where(Comment.product_id == product_id).limit(limit)).all()
+        return comments
     
     # 댓글 생성
     def create_comment(self, db: Session, product_id: int, user_id: int, content: str):
@@ -36,6 +37,7 @@ class CommentService:
 
         comment.content = content
         comment.last_modified = datetime.now()
+        db.commit()
         db.refresh(comment)
         return comment
     
