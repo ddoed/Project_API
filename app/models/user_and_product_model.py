@@ -11,7 +11,7 @@ class User(SQLModel, table=True):
     login_id: str = Field(index=True)
     email: str = Field(unique=True)
     password: str = Field(default=None, exclude=True)
-    username: str
+    username: str 
     role: str = Field(default="user")
     products: List["Product"] = Relationship(back_populates="user")
     likes: List["Likes"] = Relationship(back_populates="user")

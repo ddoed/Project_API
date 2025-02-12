@@ -44,7 +44,7 @@ def login_for_access_token(
     auth_service: AuthService = Depends(),
     jwt_util: JWTUtil = Depends()
 ):
-    user = auth_service.authenticate_user(db, form_data.username, form_data.password)  # 수정: form_data.username 사용
+    user = auth_service.authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -52,7 +52,6 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # ✅ `payload` 정의 추가
     payload = {
         "id": user.id,
         "login_id": user.login_id,
@@ -62,10 +61,16 @@ def login_for_access_token(
         "created_at": user.created_at
     }
 
-    access_token = jwt_util.create_token(payload)  # 수정: payload 추가
-    return {"access_token": access_token, "token_type": "bearer"}
+    access_token = jwt_util.create_token(payload)
+    
+    # 사용자 정보와 액세스 토큰을 함께 반환
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        **payload  # 사용자 정보 포함
+    }
 
-
+#회원가입
 #회원가입
 @router.post("/signup")
 async def auth_signup(req:AuthSignupReq,
@@ -119,17 +124,22 @@ def auth_signin(req:AuthLoginReq,
 
 # 내 프로필 조회
 @router.get("/{user_id}")
-def check_profile(user_id:int,
-                  db=Depends(get_db_session)):
-    if not user_id : 
-        raise HTTPException(status_code=404,detail="Not Found")
-    user = db.exec(
-        select(User).filter(User.id == user_id)
-    ).first()
+def check_profile(user_id: int, db=Depends(get_db_session)):
+    if not user_id:
+        raise HTTPException(status_code=404, detail="Not Found")
+    user = db.exec(select(User).filter(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    return user
+    return {
+        "id": user.id,
+        "login_id": user.login_id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "created_at": user.created_at
+    }
 
-# 내 프로필 수정
 @router.put("/profile")
 def update_profile(
     update_data: ProfileUpdateRequest,
@@ -137,24 +147,41 @@ def update_profile(
     db: Session = Depends(get_db_session),
     auth_service: AuthService = Depends()
 ):
-    # 이메일 변경 시 중복 확인
+    # 현재 비밀번호 확인 (비밀번호 변경 시)
+    if update_data.password:
+        if not auth_service.verify_password(update_data.current_password, current_user.password):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+        # 비밀번호가 맞으면 새로운 비밀번호로 업데이트
+        current_user.password = auth_service.get_hashed_pwd(update_data.password)
+    
+    # 이메일 중복 확인
     if update_data.email and update_data.email != current_user.email:
         existing_user = db.exec(select(User).where(User.email == update_data.email)).first()
         if existing_user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use")
     
-    # 사용자 정보 업데이트
-    if update_data.username:
-        current_user.username = update_data.username
-    if update_data.email:
-        current_user.email = update_data.email
-    if update_data.password:
-        current_user.password = auth_service.get_hashed_pwd(update_data.password)
+    # 로그인 ID 중복 확인
+    if update_data.login_id and update_data.login_id != current_user.login_id:
+        existing_user = db.exec(select(User).where(User.login_id == update_data.login_id)).first()
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Login ID already in use")
     
-    # 데이터베이스에 변경사항 저장
-    db.add(current_user)
-    db.commit()
-    db.refresh(current_user)
+    # 사용자 정보 업데이트
+    if update_data.username and update_data.username != current_user.username:
+        current_user.username = update_data.username
+    if update_data.email and update_data.email != current_user.email:
+        current_user.email = update_data.email
+    if update_data.login_id and update_data.login_id != current_user.login_id:
+        current_user.login_id = update_data.login_id
+    
+    try:
+        # 데이터베이스에 변경사항 저장
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occurred while updating the profile")
     
     # 업데이트된 사용자 정보 반환 (비밀번호 제외)
     return {
@@ -165,6 +192,8 @@ def update_profile(
         "role": current_user.role,
         "created_at": current_user.created_at
     }
+
+# 기타 필요한 라우터 및 엔드포인트들...
 
 # 회원 탈퇴
 @router.delete("/profile")
