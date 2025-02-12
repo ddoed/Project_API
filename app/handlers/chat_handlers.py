@@ -26,7 +26,15 @@ def create_chatroom(product_id:int, reqChat: ReqChatroom,
     session.add(new_chatroom)
     session.commit()
     session.refresh(new_chatroom)
-    return RespChatRoom(chatrooms=[new_chatroom])
+    return RespChatRoom(
+        chatrooms=[ChatRoomResponse(
+            id=new_chatroom.id,
+            product_id=new_chatroom.product_id,
+            created_at=new_chatroom.created_at,
+            chat_seller=new_chatroom.chat_seller,
+            chat_buyer=new_chatroom.chat_buyer
+        )]
+    )
 
 # 채팅방 목록 조회
 @router.get("/chats")
@@ -37,7 +45,15 @@ def get_chatrooms(user_id: int, session=Depends(get_db_session)):
             (ChatRoom.chat_seller == user_id) | (ChatRoom.chat_buyer == user_id)
         )
     ).all()
-    return RespChatRoom(chatrooms=chatrooms)
+    return RespChatRoom(chatrooms=[
+        ChatRoomResponse(
+            id=room.id,
+            product_id=room.product_id,
+            created_at=room.created_at,
+            chat_seller=room.chat_seller,
+            chat_buyer=room.chat_buyer
+        ) for room in chatrooms
+    ])
 
 # 채팅방 상세 조회 (메세지 조회)
 @router.get("/chats/{chatroom_id}")
@@ -51,4 +67,13 @@ def get_chats(chatroom_id: int, session=Depends(get_db_session)):
     messages = session.exec(
         select(Message).where(Message.chatroom_id == chatroom_id)
     ).all()
-    return RespChats(messages=messages)
+    return RespChats(messages=[
+        MessageResponse(
+            id=msg.id,
+            chatroom_id=msg.chatroom_id,
+            sender_id=msg.sender_id,
+            receiver_id=msg.receiver_id,
+            content=msg.content,
+            sent_at=msg.sent_at
+        ) for msg in messages
+    ])

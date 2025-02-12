@@ -34,17 +34,17 @@ app.include_router(ws_handler.router)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # ? react 사용을 위한 CORS 설정
-# # 허용할 출처(origin) 목록
-# origins = [
-#     "http://localhost:3000",  # React 개발 서버
-#     "http://127.0.0.1:3000",  # 로컬호스트 IP
-#     "https://yourdomain.com",  # 실제 배포된 프론트엔드 URL (필요 시 추가)
-# ]
+# 허용할 출처(origin) 목록
+origins = [
+    "http://localhost:3000",  # React 개발 서버
+    "http://127.0.0.1:3000",  # 로컬호스트 IP
+    #"https://yourdomain.com",  # 실제 배포된 프론트엔드 URL (필요 시 추가)
+]
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,  # 허용할 도메인 목록
-#     allow_credentials=True,  # 쿠키 포함 여부
-#     allow_methods=["*"],  # 허용할 HTTP 메서드 (GET, POST, PUT 등)
-#     allow_headers=["*"],  # 허용할 HTTP 헤더
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # 허용할 도메인 목록
+    allow_credentials=True,  # 쿠키 포함 여부
+    allow_methods=["*"],  # 허용할 HTTP 메서드 (GET, POST, PUT 등)
+    allow_headers=["*"],  # 허용할 HTTP 헤더
+)
