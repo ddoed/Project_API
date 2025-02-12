@@ -70,6 +70,7 @@ class Comment(SQLModel, table=True):
     product_id: int = Field(foreign_key="product.id")
     user_id: int = Field(foreign_key="user.id")
     content: str
+    last_modified: datetime = Field(default_factory=datetime.now)
 
     product: Product = Relationship(back_populates="comments")
     user: User = Relationship(back_populates="comments")
@@ -99,9 +100,6 @@ class ProductSortType(Enum):
     ACCURACY = 0
     LATEST = 1
 
-class ReqComment(BaseModel):
-    user_id: int
-    content: str
 
 class RespComments(BaseModel):
     comments : list[Comment]
