@@ -13,12 +13,13 @@ class User(SQLModel, table=True):
     password: str = Field(default=None, exclude=True)
     username: str 
     role: str = Field(default="user")
-    products: List["Product"] = Relationship(back_populates="user")
-    likes: List["Likes"] = Relationship(back_populates="user")
-    comments: List["Comment"] = Relationship(back_populates="user")
-    access_token: str | None = None
     created_at: int | None = Field(index=True) 
-    purchases: List["Purchase"] = Relationship(back_populates="user")
+
+    products: List["Product"] = Relationship(back_populates="user", cascade_delete=True)
+    likes: List["Likes"] = Relationship(back_populates="user", cascade_delete=True)
+    comments: List["Comment"] = Relationship(back_populates="user", cascade_delete=True)
+    access_token: str | None = None
+    purchases: List["Purchase"] = Relationship(back_populates="user", cascade_delete=True)
 
 class Category(SQLModel, table=True):
     # id 자동생성, 증가하는 숫자
