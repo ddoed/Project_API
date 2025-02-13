@@ -120,23 +120,7 @@ def auth_signin(req:AuthLoginReq,
     user.access_token = jwtUtil.create_token(user.model_dump())
     return user
 
-# 내 프로필 조회
-@router.get("/{user_id}")
-def check_profile(user_id: int, db=Depends(get_db_session)):
-    if not user_id:
-        raise HTTPException(status_code=404, detail="Not Found")
-    user = db.exec(select(User).filter(User.id == user_id)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {
-        "id": user.id,
-        "login_id": user.login_id,
-        "email": user.email,
-        "username": user.username,
-        "role": user.role,
-        "created_at": user.created_at
-    }
+
 
 #프로필 수정
 @router.put("/profile")
@@ -257,3 +241,20 @@ def get_user_likes(user_id: int, db: Session = Depends(get_db_session)):
 
     return results
 
+# 내 프로필 조회
+@router.get("/{user_id}")
+def check_profile(user_id: int, db=Depends(get_db_session)):
+    if not user_id:
+        raise HTTPException(status_code=404, detail="Not Found")
+    user = db.exec(select(User).filter(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user.id,
+        "login_id": user.login_id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "created_at": user.created_at
+    }
