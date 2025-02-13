@@ -3,6 +3,9 @@ from app.models.user_and_product_model import *
 from app.io import create_file_name, save_file, delete_file
 from fastapi import UploadFile, HTTPException, BackgroundTasks
 from sqlmodel import Session, select
+from sqlalchemy import or_
+from sqlalchemy.sql.expression import desc
+from sqlalchemy import text
 from typing import Optional
 from datetime import datetime, timezone
 
@@ -36,10 +39,16 @@ class ProductService:
             query = query.where(Product.price >= min_price)
         if max_price:
             query = query.where(Product.price <= max_price)
-        if sort_type == ProductSortType.LATEST:
-            query = query.order_by(Product.date)
-        elif sort_type == ProductSortType.ACCURACY:
-            query = query.order_by(Product.heart_count)
+        if sort_type == ProductSortType.ACCURACY:
+            pass
+        elif sort_type == ProductSortType.LATEST:
+            query = query.order_by(Product.date.desc())
+        elif sort_type == ProductSortType.PRICE_ASC:
+            query = query.order_by(Product.price)
+        elif sort_type == ProductSortType.PRICE_DESC:
+            query = query.order_by(Product.price.desc())
+        elif sort_type == ProductSortType.LIKES:
+            query = query.order_by(Product.heart_count.desc())
         query = query.offset(page * limit).limit(limit)
 
         products = db.exec(

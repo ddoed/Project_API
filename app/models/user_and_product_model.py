@@ -97,8 +97,11 @@ class ProductResponse(BaseModel):
     productImages: list[ProductImage]
 
 class ProductSortType(Enum):
-    ACCURACY = 0
-    LATEST = 1
+    ACCURACY = "accuracy"
+    LATEST = "latest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+    LIKES = "likes"
 
 
 class RespComments(BaseModel):
