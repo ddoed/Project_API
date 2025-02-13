@@ -44,14 +44,14 @@ def login_for_access_token(
     auth_service: AuthService = Depends(),
     jwt_util: JWTUtil = Depends()
 ):
-    user = auth_service.authenticate_user(db, form_data.username, form_data.password)  # 수정: form_data.username 사용
+    user = auth_service.authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # JWT 토큰 생성
+
     payload = {
         "id": user.id,
         "login_id": user.login_id,
@@ -60,26 +60,26 @@ def login_for_access_token(
         "role": user.role,
         "created_at": user.created_at
     }
+
     access_token = jwt_util.create_token(payload)
+    # 사용자 정보와 액세스 토큰을 함께 반환
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user_id": user.id,  # ✅ user_id를 추가하여 응답에 포함
+        **payload  # 사용자 정보 포함
     }
+
 #회원가입
 @router.post("/signup")
 async def auth_signup(req:AuthSignupReq,
-                db=Depends(get_db_session),
-                jwtUtil:JWTUtil=Depends(),
-                authService:AuthService=Depends()):
-    #id 중복 확인
-    # existiong_user = await db.execute(select(User).where(User.login_id==req.login_id))
-    # if existiong_user.scalars().first():
-    #     raise HTTPException(status_code=400, detail="User already exists")
+                      db=Depends(get_db_session),
+                      jwtUtil:JWTUtil=Depends(),
+                      authService:AuthService=Depends()):
+    user = authService.signup(db, req.login_id, req.pwd, req.name, req.email)
 
-    user = authService.signup(db,req.login_id,req.pwd,req.name,req.email)
     if not user:
-        raise HTTPException(status_code=400,detail="error")
+        raise HTTPException(status_code=400, detail="error")
+
     payload = {
         "id": user.id,
         "login_id": user.login_id,
@@ -89,8 +89,15 @@ async def auth_signup(req:AuthSignupReq,
         "created_at": user.created_at
     }
 
-    # JWT 토큰 생성
-    user.access_token = jwtUtil.create_token(payload)
+    # 🔹 토큰 생성
+    token = jwtUtil.create_token(payload)
+
+    # 🔹 DB에 반영되도록 저장
+    user.access_token = token  
+    db.add(user)  # 변경된 객체 추가
+    db.commit()   # DB에 반영
+    db.refresh(user)  # DB에서 최신 상태 불러오기 (flush 역할)
+
     return {
         "id": user.id,
         "login_id": user.login_id,
@@ -98,8 +105,9 @@ async def auth_signup(req:AuthSignupReq,
         "username": user.username,
         "role": user.role,
         "created_at": user.created_at,
-        "access_token": user.access_token
+        "access_token": user.access_token  # ✅ DB에도 반영됨!
     }
+
 # 로그인
 @router.post("/signin")
 def auth_signin(req:AuthLoginReq,
@@ -114,52 +122,87 @@ def auth_signin(req:AuthLoginReq,
 
 # 내 프로필 조회
 @router.get("/{user_id}")
-def check_profile(user_id:int,
-                  db=Depends(get_db_session)):
-    if not user_id : 
-        raise HTTPException(status_code=404,detail="Not Found")
-    user = db.exec(
-        select(User).filter(User.id == user_id)
-    ).first()
+def check_profile(user_id: int, db=Depends(get_db_session)):
+    if not user_id:
+        raise HTTPException(status_code=404, detail="Not Found")
+    user = db.exec(select(User).filter(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    return user
+    return {
+        "id": user.id,
+        "login_id": user.login_id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "created_at": user.created_at
+    }
 
-# 내 프로필 수정
+#프로필 수정
 @router.put("/profile")
 def update_profile(
     update_data: ProfileUpdateRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db_session),
-    auth_service: AuthService = Depends()
+    auth_service: AuthService = Depends(),
+    jwt_util: JWTUtil = Depends()
 ):
-    # 이메일 변경 시 중복 확인
+    # 현재 비밀번호 확인 (비밀번호 변경 시)
+    if update_data.password:
+        if not auth_service.verify_pwd(update_data.current_password, current_user.password):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+        current_user.password = auth_service.get_hashed_pwd(update_data.password)
+    
+    # 이메일 중복 확인
     if update_data.email and update_data.email != current_user.email:
         existing_user = db.exec(select(User).where(User.email == update_data.email)).first()
         if existing_user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use")
     
+    # 로그인 ID 중복 확인
+    if update_data.login_id and update_data.login_id != current_user.login_id:
+        existing_user = db.exec(select(User).where(User.login_id == update_data.login_id)).first()
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Login ID already in use")
+    
     # 사용자 정보 업데이트
-    if update_data.username:
+    if update_data.username and update_data.username != current_user.username:
         current_user.username = update_data.username
-    if update_data.email:
+    if update_data.email and update_data.email != current_user.email:
         current_user.email = update_data.email
-    if update_data.password:
-        current_user.password = auth_service.get_hashed_pwd(update_data.password)
+    if update_data.login_id and update_data.login_id != current_user.login_id:
+        current_user.login_id = update_data.login_id
     
-    # 데이터베이스에 변경사항 저장
-    db.add(current_user)
-    db.commit()
-    db.refresh(current_user)
+    try:
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occurred while updating the profile")
     
-    # 업데이트된 사용자 정보 반환 (비밀번호 제외)
+    # 새로운 토큰 생성 (필요한 경우)
+    payload = {
+        "id": current_user.id,
+        "login_id": current_user.login_id,
+        "email": current_user.email,
+        "username": current_user.username,
+        "role": current_user.role,
+        "created_at": str(current_user.created_at)  # datetime -> string 변환 필요
+    }
+    new_access_token = jwt_util.create_token(payload)
+
+    # 업데이트된 사용자 정보와 새 토큰 반환
     return {
         "id": current_user.id,
         "login_id": current_user.login_id,
         "email": current_user.email,
         "username": current_user.username,
         "role": current_user.role,
-        "created_at": current_user.created_at
+        "created_at": str(current_user.created_at),
+        "access_token": new_access_token  # 새 토큰 포함
     }
+
 
 # 회원 탈퇴
 @router.delete("/profile")
@@ -177,7 +220,8 @@ def delete_profile(
     db.commit()
 
     return {"message": "Profile deleted successfully"}
-# # 내 판매 내역 조회
+
+## 내 판매 내역 조회
 @router.get("/{user_id}/selling")
 def check_my_selling_list(user_id:str,
                           db = Depends(get_db_session)):
@@ -212,3 +256,4 @@ def get_user_likes(user_id: int, db: Session = Depends(get_db_session)):
     results = [db.get(Product, like_product.product_id) for like_product in like_products]
 
     return results
+

@@ -19,6 +19,8 @@ class AuthSignupReq(BaseModel):
     email:EmailStr
 
 class ProfileUpdateRequest(BaseModel):
-    username: str | None = Field(None, min_length=2, max_length=50)
-    email: EmailStr | None = None
-    password: str | None = Field(None, min_length=8)
+    login_id: Optional[str]
+    username: Optional[str]
+    email: Optional[EmailStr]
+    password: Optional[str]
+    current_password: str
