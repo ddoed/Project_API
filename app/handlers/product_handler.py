@@ -5,7 +5,7 @@ from app.models.auth_models import *
 from app.models.user_and_product_model import *
 from app.services.product_service import ProductService
 from app.handlers.auth_handler import get_current_user
-from sqlmodel import Session, select
+from sqlmodel import Session, asc, desc, select
 
 router = APIRouter(
     prefix="/products"
@@ -100,6 +100,13 @@ def validate_product_image_owner(
 ) -> ProductImage:
     return productService.get_product_image(db, product.id, image_id)
 
+class ProductSortType(str, Enum):
+    ACCURACY = "accuracy"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+    LATEST = "latest"
+    LIKES = "likes"
+
 @router.get("/", status_code=200)
 def get_products(
     q: Optional[str] = Query(None),
@@ -107,16 +114,49 @@ def get_products(
     soldout: Optional[bool] = Query(None),
     min_price: Optional[int] = Query(None, ge=0),
     max_price: Optional[int] = Query(None, ge=0),
-    sort_type: int = Query(ProductSortType.ACCURACY),
+    sort_type: ProductSortType = Query(),
     page: int = Query(0, ge=0),
     limit: int = Query(20, le=100),
     db: Session = Depends(get_db_session),
     productService: ProductService = Depends()
 ) -> list[ProductResponse]:
-    products = productService.get_products(db, q, category_id, soldout, min_price, max_price, sort_type, page, limit)
+
+    query = select(Product)
+
+    if q:
+        query = query.where(Product.title.contains(q))
+
+    if category_id:
+        query = query.where(Product.category_id == category_id)
+
+    if soldout is not None:
+        query = query.where(Product.soldout == soldout)
+
+    if min_price is not None:
+        query = query.where(Product.price >= min_price)
+
+    if max_price is not None:
+        query = query.where(Product.price <= max_price)
+
+    # 🏷 정렬 기준 적용
+    if sort_type == ProductSortType.PRICE_ASC:
+        query = query.order_by(asc(Product.price))
+    elif sort_type == ProductSortType.PRICE_DESC:
+        query = query.order_by(desc(Product.price))
+    elif sort_type == ProductSortType.LATEST:
+        query = query.order_by(desc(Product.date))
+    elif sort_type == ProductSortType.LIKES:
+        query = query.order_by(desc(Product.heart_count))
+    else:
+        query = query.order_by(Product.id)  # 기본값: 등록 순
+
+    products = db.exec(query.offset(page * limit).limit(limit)).all()
+
     result = [
-        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id)) for product in products 
+        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id))
+        for product in products
     ]
+    
     return result
 
 @router.post("/", status_code=201)
@@ -228,10 +268,7 @@ def purchase_product(
 def get_my_purchases(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_user)
-) -> list[ProductResponse]:
-    """ 현재 로그인한 사용자의 구매 목록 조회 """
-    
-    # 1️⃣ 현재 사용자가 구매한 상품 조회
+) -> list[dict]:
     purchases = db.exec(
         select(Purchase).where(Purchase.user_id == current_user.id)
     ).all()
@@ -239,16 +276,19 @@ def get_my_purchases(
     if not purchases:
         return []
 
-    # 2️⃣ 구매한 상품 정보 가져오기
-    productService = ProductService()
-    purchased_products = [
-        productService.get_product(db, purchase.product_id) for purchase in purchases
-    ]
+    purchased_products = []
+    for purchase in purchases:
+        product = db.get(Product, purchase.product_id)
+        seller = db.get(User, product.user_id)
+        purchased_products.append({
+            "id": product.id,
+            "title": product.title,
+            "price": product.price,
+            "seller_name": seller.login_id,  # 'name'을 'login_id'로 변경
+            "purchase_date": purchase.purchase_date
+        })
     
-    return [
-        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id))
-        for product in purchased_products
-    ]
+    return purchased_products
 
 # ✅ 특정 상품의 구매 정보 조회
 @router.get("/{product_id}/purchase", status_code=200)
