@@ -5,7 +5,7 @@ from app.models.auth_models import *
 from app.models.user_and_product_model import *
 from app.services.product_service import ProductService
 from app.handlers.auth_handler import get_current_user
-from sqlmodel import Session, select
+from sqlmodel import Session, asc, desc, select
 
 router = APIRouter(
     prefix="/products"
@@ -100,6 +100,13 @@ def validate_product_image_owner(
 ) -> ProductImage:
     return productService.get_product_image(db, product.id, image_id)
 
+class ProductSortType(str, Enum):
+    ACCURACY = "accuracy"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+    LATEST = "latest"
+    LIKES = "likes"
+
 @router.get("/", status_code=200)
 def get_products(
     q: Optional[str] = Query(None),
@@ -107,16 +114,49 @@ def get_products(
     soldout: Optional[bool] = Query(None),
     min_price: Optional[int] = Query(None, ge=0),
     max_price: Optional[int] = Query(None, ge=0),
-    sort_type: int = Query(ProductSortType.ACCURACY),
+    sort_type: ProductSortType = Query(ProductSortType.ACCURACY),
     page: int = Query(0, ge=0),
     limit: int = Query(20, le=100),
     db: Session = Depends(get_db_session),
     productService: ProductService = Depends()
 ) -> list[ProductResponse]:
-    products = productService.get_products(db, q, category_id, soldout, min_price, max_price, sort_type, page, limit)
+
+    query = select(Product)
+
+    if q:
+        query = query.where(Product.title.contains(q))
+
+    if category_id:
+        query = query.where(Product.category_id == category_id)
+
+    if soldout is not None:
+        query = query.where(Product.soldout == soldout)
+
+    if min_price is not None:
+        query = query.where(Product.price >= min_price)
+
+    if max_price is not None:
+        query = query.where(Product.price <= max_price)
+
+    # 🏷 정렬 기준 적용
+    if sort_type == ProductSortType.PRICE_ASC:
+        query = query.order_by(asc(Product.price))
+    elif sort_type == ProductSortType.PRICE_DESC:
+        query = query.order_by(desc(Product.price))
+    elif sort_type == ProductSortType.LATEST:
+        query = query.order_by(desc(Product.date))
+    elif sort_type == ProductSortType.LIKES:
+        query = query.order_by(desc(Product.heart_count))
+    else:
+        query = query.order_by(Product.id)  # 기본값: 등록 순
+
+    products = db.exec(query.offset(page * limit).limit(limit)).all()
+
     result = [
-        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id)) for product in products 
+        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id))
+        for product in products
     ]
+    
     return result
 
 @router.post("/", status_code=201)
