@@ -228,10 +228,7 @@ def purchase_product(
 def get_my_purchases(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_user)
-) -> list[ProductResponse]:
-    """ 현재 로그인한 사용자의 구매 목록 조회 """
-    
-    # 1️⃣ 현재 사용자가 구매한 상품 조회
+) -> list[dict]:
     purchases = db.exec(
         select(Purchase).where(Purchase.user_id == current_user.id)
     ).all()
@@ -239,16 +236,19 @@ def get_my_purchases(
     if not purchases:
         return []
 
-    # 2️⃣ 구매한 상품 정보 가져오기
-    productService = ProductService()
-    purchased_products = [
-        productService.get_product(db, purchase.product_id) for purchase in purchases
-    ]
+    purchased_products = []
+    for purchase in purchases:
+        product = db.get(Product, purchase.product_id)
+        seller = db.get(User, product.user_id)
+        purchased_products.append({
+            "id": product.id,
+            "title": product.title,
+            "price": product.price,
+            "seller_name": seller.login_id,  # 'name'을 'login_id'로 변경
+            "purchase_date": purchase.purchase_date
+        })
     
-    return [
-        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id))
-        for product in purchased_products
-    ]
+    return purchased_products
 
 # ✅ 특정 상품의 구매 정보 조회
 @router.get("/{product_id}/purchase", status_code=200)
