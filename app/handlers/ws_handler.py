@@ -50,8 +50,9 @@ async def chatroom_websocket(ws: WebSocket, chatroom_id: int, session: Session =
                 session.add(new_message)
                 session.commit()
 
-                # 같은 채팅방에 있는 모든 사용자에게 메시지 전송
-                await ws_manager.send_to_room(chatroom_id, f"User {sender_id}: {content}")
+                # WebSocket 연결이 있는 경우에만 메시지 전송
+                if ws_manager.is_connected(chatroom_id):
+                    await ws_manager.send_to_room(chatroom_id, f"User {sender_id}: {content}")
 
             except json.JSONDecodeError:
                 await ws.send_text("Error: Invalid message format. Use JSON.")
@@ -60,13 +61,12 @@ async def chatroom_websocket(ws: WebSocket, chatroom_id: int, session: Session =
         ws_manager.disconnect(ws, chatroom_id)
         await ws_manager.send_to_room(chatroom_id, "사용자가 퇴장했습니다.")
 
-# HTTP POST 메시지 전송 기능 (WebSocket을 사용하지 않음)
 @router.post("/chats/{chatroom_id}/messages")
 def send_message(
     chatroom_id: int,
     message: MessageResponse,
-    session: Session = Depends(get_db_session),
-):
+    session: Session = Depends(get_db_session)):
+    print(MessageResponse)
     # 새 메시지 객체 생성
     new_message = Message(
         chatroom_id=chatroom_id,
@@ -81,9 +81,10 @@ def send_message(
     session.commit()
     session.refresh(new_message)
 
-    # WebSocket을 통해 메시지를 채팅방에 있는 모든 사용자에게 전달
-    # WebSocket을 통해 이미 연결된 클라이언트에게 메시지를 전송 (이 부분은 WebSocket 연결된 상태에서 처리)
-    ws_manager.send_to_room(chatroom_id, f"User {message.sender_id}: {message.content}")
+    # WebSocket 연결 상태 확인 후 메시지 전송
+    if ws_manager.is_connected(chatroom_id):
+        # WebSocket을 통해 이미 연결된 클라이언트에게 메시지를 전송
+        ws_manager.send_to_room(chatroom_id, f"User {message.sender_id}: {message.content}")
 
     return MessageResponse(
         id=new_message.id,
