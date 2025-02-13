@@ -121,6 +121,60 @@ def auth_signin(req:AuthLoginReq,
     return user
 
 
+## 내 판매 내역 조회
+
+@router.get("/selling", status_code=200)
+def check_my_selling_list(
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    현재 로그인한 사용자의 판매 내역 조회
+    """
+    selling_list = db.exec(select(Product).where(Product.user_id == current_user.id)).all()
+    return {"my_selling_list": selling_list}
+# 내 구매 내역 조회
+@router.get("/{user_id}/bought")
+def get_user_bought(user_id: int, db: Session = Depends(get_db_session)):
+    # 사용자 ID에 해당하는 구매 내역을 가져옵니다.
+    purchases = db.exec(select(Purchase).where(Purchase.user_id == user_id)).all()
+
+    # 각 구매 내역에 대해 상품을 찾아서 반환합니다.
+    # 만약 값이 없으면 빈 리스트를 출력
+    results = [db.get(Product, purchase.product_id) for purchase in purchases]
+
+    return results
+
+# 내 좋아요 내역 조회
+@router.get("/{user_id}/likes")
+def get_user_likes(user_id: int, db: Session = Depends(get_db_session)):
+    # 사용자 ID에 해당하는 좋아요 내역을 가져옵니다.
+    like_products = db.exec(select(Likes).where(Likes.user_id == user_id)).all()
+
+    # 각 좋아요 내역에 대해 상품을 찾아서 반환합니다.
+    # 만약 값이 없으면 빈 리스트를 출력
+    results = [db.get(Product, like_product.product_id) for like_product in like_products]
+
+    return results
+
+
+# 내 프로필 조회
+@router.get("/{user_id}")
+def check_profile(user_id: int, db=Depends(get_db_session)):
+    if not user_id:
+        raise HTTPException(status_code=404, detail="Not Found")
+    user = db.exec(select(User).filter(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user.id,
+        "login_id": user.login_id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "created_at": user.created_at
+    }
 
 #프로필 수정
 @router.put("/profile")
@@ -205,56 +259,3 @@ def delete_profile(
 
     return {"message": "Profile deleted successfully"}
 
-## 내 판매 내역 조회
-@router.get("/{user_id}/selling")
-def check_my_selling_list(user_id:str,
-                          db = Depends(get_db_session)):
-    user = db.get(User,user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Not Found")
-    selling_list = user.products
-    return {
-        "my selling list": selling_list
-    }
-
-# 내 구매 내역 조회
-@router.get("/{user_id}/bought")
-def get_user_bought(user_id: int, db: Session = Depends(get_db_session)):
-    # 사용자 ID에 해당하는 구매 내역을 가져옵니다.
-    purchases = db.exec(select(Purchase).where(Purchase.user_id == user_id)).all()
-
-    # 각 구매 내역에 대해 상품을 찾아서 반환합니다.
-    # 만약 값이 없으면 빈 리스트를 출력
-    results = [db.get(Product, purchase.product_id) for purchase in purchases]
-
-    return results
-
-# 내 좋아요 내역 조회
-@router.get("/{user_id}/likes")
-def get_user_likes(user_id: int, db: Session = Depends(get_db_session)):
-    # 사용자 ID에 해당하는 좋아요 내역을 가져옵니다.
-    like_products = db.exec(select(Likes).where(Likes.user_id == user_id)).all()
-
-    # 각 좋아요 내역에 대해 상품을 찾아서 반환합니다.
-    # 만약 값이 없으면 빈 리스트를 출력
-    results = [db.get(Product, like_product.product_id) for like_product in like_products]
-
-    return results
-
-# 내 프로필 조회
-@router.get("/{user_id}")
-def check_profile(user_id: int, db=Depends(get_db_session)):
-    if not user_id:
-        raise HTTPException(status_code=404, detail="Not Found")
-    user = db.exec(select(User).filter(User.id == user_id)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {
-        "id": user.id,
-        "login_id": user.login_id,
-        "email": user.email,
-        "username": user.username,
-        "role": user.role,
-        "created_at": user.created_at
-    }
