@@ -12,7 +12,8 @@ from app.handlers import (auth_handler,
                           chat_handlers,
                           comment_handlers,
                           product_handler,
-                          ws_handler)
+                          ws_handler,
+                          category_handler)
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
@@ -30,6 +31,7 @@ app.include_router(chat_handlers.router)
 app.include_router(comment_handlers.router)
 app.include_router(product_handler.router)
 app.include_router(ws_handler.router)
+app.include_router(category_handler.router)
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
