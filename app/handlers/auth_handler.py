@@ -61,7 +61,11 @@ def login_for_access_token(
         "created_at": user.created_at
     }
     access_token = jwt_util.create_token(payload)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user.id,  # ✅ user_id를 추가하여 응답에 포함
+    }
 #회원가입
 @router.post("/signup")
 async def auth_signup(req:AuthSignupReq,

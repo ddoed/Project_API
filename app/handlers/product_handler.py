@@ -109,7 +109,7 @@ def get_products(
     max_price: Optional[int] = Query(None, ge=0),
     sort_type: int = Query(ProductSortType.ACCURACY),
     page: int = Query(0, ge=0),
-    limit: int = Query(10, le=100),
+    limit: int = Query(20, le=100),
     db: Session = Depends(get_db_session),
     productService: ProductService = Depends()
 ) -> list[ProductResponse]:

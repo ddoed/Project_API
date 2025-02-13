@@ -34,16 +34,20 @@ def create_comment(
     new_comment = comment_service.create_comment(session, product_id, current_user.id, content)
     return RespComments(comments=[new_comment])
 
+# ✅ Pydantic 모델 정의
+class CommentUpdate(BaseModel):
+    content: str
+
 # 댓글 수정 (인증 필요)
 @router.put("/{comment_id}", status_code=200)
 def update_comment(
     comment_id: int,
-    content: str = Body(..., description="수정할 댓글 내용"),
+    comment_data: CommentUpdate,
     current_user: User = Depends(get_current_user),
     session = Depends(get_db_session)
     ) -> RespComments:
     
-    updated_comment = comment_service.update_comment(session, comment_id, current_user.id, content)
+    updated_comment = comment_service.update_comment(session, comment_id, current_user.id, comment_data.content)
     return RespComments(comments=[updated_comment])
 
 
