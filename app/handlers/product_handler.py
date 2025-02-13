@@ -181,3 +181,98 @@ def delete_product_image(
 ) -> None:
     productService.delete_product_image(db, product_image)
     return None
+
+# ✅ 상품 구매 기능 추가
+@router.post("/{product_id}/purchase", status_code=201)
+def purchase_product(
+    product_id: int,
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(get_current_user)
+):
+    """ 상품을 구매하는 기능 """
+    
+    # 1️⃣ 상품이 존재하는지 확인
+    product = db.get(Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # 2️⃣ 본인이 올린 상품인지 확인 (자기 자신은 구매할 수 없음)
+    if product.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot purchase your own product")
+
+    # 3️⃣ 이미 구매한 기록이 있는지 확인
+    existing_purchase = db.exec(
+        select(Purchase).where(Purchase.user_id == current_user.id, Purchase.product_id == product_id)
+    ).first()
+    if existing_purchase:
+        raise HTTPException(status_code=400, detail="You have already purchased this product")
+
+    # 4️⃣ 구매 등록
+    new_purchase = Purchase(
+        user_id=current_user.id,
+        product_id=product_id,
+        purchase_date=datetime.now()
+    )
+    db.add(new_purchase)
+
+    # 5️⃣ 상품 상태를 `soldout = True` 로 변경
+    product.soldout = True
+
+    db.commit()
+    db.refresh(new_purchase)
+
+    return {"message": "Purchase successful", "purchase_id": new_purchase.id, "buyer_id": new_purchase.user_id}
+
+# ✅ 내가 구매한 상품 목록 조회
+@router.get("/purchases/me", status_code=200)
+def get_my_purchases(
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(get_current_user)
+) -> list[ProductResponse]:
+    """ 현재 로그인한 사용자의 구매 목록 조회 """
+    
+    # 1️⃣ 현재 사용자가 구매한 상품 조회
+    purchases = db.exec(
+        select(Purchase).where(Purchase.user_id == current_user.id)
+    ).all()
+
+    if not purchases:
+        return []
+
+    # 2️⃣ 구매한 상품 정보 가져오기
+    productService = ProductService()
+    purchased_products = [
+        productService.get_product(db, purchase.product_id) for purchase in purchases
+    ]
+    
+    return [
+        ProductResponse(product=product, productImages=productService.get_product_images(db, product.id))
+        for product in purchased_products
+    ]
+
+# ✅ 특정 상품의 구매 정보 조회
+@router.get("/{product_id}/purchase", status_code=200)
+def get_product_purchase_info(
+    product_id: int,
+    db: Session = Depends(get_db_session)
+) -> dict:
+    """ 특정 상품이 구매되었는지 확인 """
+    
+    # 1️⃣ 상품이 존재하는지 확인
+    product = db.get(Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # 2️⃣ 상품이 구매되었는지 확인
+    purchase = db.exec(
+        select(Purchase).where(Purchase.product_id == product_id)
+    ).first()
+
+    if not purchase:
+        return {"purchased": False}
+
+    return {
+        "purchased": True,
+        "buyer_id": purchase.user_id,
+        "purchase_date": purchase.purchase_date
+    }
