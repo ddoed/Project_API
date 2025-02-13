@@ -114,7 +114,7 @@ def get_products(
     soldout: Optional[bool] = Query(None),
     min_price: Optional[int] = Query(None, ge=0),
     max_price: Optional[int] = Query(None, ge=0),
-    sort_type: ProductSortType = Query(ProductSortType.ACCURACY),
+    sort_type: ProductSortType = Query(),
     page: int = Query(0, ge=0),
     limit: int = Query(20, le=100),
     db: Session = Depends(get_db_session),
