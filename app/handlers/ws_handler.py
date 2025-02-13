@@ -8,9 +8,15 @@ import json
 from datetime import datetime
 
 router = APIRouter()
+# 쿼리 파라미터에서 user_id를 추출하는 함수
+def get_user_id_from_query(ws: WebSocket):
+    user_id = ws.query_params.get('user_id')
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="user_id query parameter is required")
+    return int(user_id)
 
 @router.websocket("/chats/{chatroom_id}/message")
-async def chatroom_websocket(ws: WebSocket, chatroom_id: int, session: Session = Depends(get_db_session)):
+async def chatroom_websocket(ws: WebSocket, chatroom_id: int, user_id: int = Depends(get_user_id_from_query), session: Session = Depends(get_db_session)):
     """WebSocket을 이용한 실시간 채팅 기능"""
 
     # 채팅방 존재 여부 확인
@@ -20,7 +26,7 @@ async def chatroom_websocket(ws: WebSocket, chatroom_id: int, session: Session =
         raise HTTPException(status_code=404, detail="Chatroom not found")
 
     # WebSocket 연결 수락 및 채팅방에 추가
-    await ws_manager.connect(ws, chatroom_id)
+    await ws_manager.connect(ws, chatroom_id, user_id)
 
     try:
         while True:
@@ -58,8 +64,11 @@ async def chatroom_websocket(ws: WebSocket, chatroom_id: int, session: Session =
                 await ws.send_text("Error: Invalid message format. Use JSON.")
 
     except WebSocketDisconnect:
-        ws_manager.disconnect(ws, chatroom_id)
-        await ws_manager.send_to_room(chatroom_id, "사용자가 퇴장했습니다.")
+        # WebSocket 연결 종료 시 user_id와 chatroom_id를 전달하여 연결 종료 처리
+        print(f"WebSocket 연결 끊김 - user_id: {user_id}, chatroom_id: {chatroom_id}")  # 로그로 확인
+        await ws_manager.disconnect(ws, chatroom_id, user_id)
+        await ws_manager.send_to_room(chatroom_id, f"사용자가 {user_id} 퇴장했습니다.")
+
 
 @router.post("/chats/{chatroom_id}/messages")
 def send_message(
