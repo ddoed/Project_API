@@ -62,7 +62,6 @@ def login_for_access_token(
     }
 
     access_token = jwt_util.create_token(payload)
-    
     # 사용자 정보와 액세스 토큰을 함께 반환
     return {
         "access_token": access_token,
