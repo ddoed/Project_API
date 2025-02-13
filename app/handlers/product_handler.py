@@ -262,6 +262,22 @@ def purchase_product(
     db.refresh(new_purchase)
 
     return {"message": "Purchase successful", "purchase_id": new_purchase.id, "buyer_id": new_purchase.user_id}
+@router.delete("/purchases/{purchase_id}", status_code=204)
+def delete_purchase(
+    purchase_id: int,
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(get_current_user)
+):
+    purchase = db.get(Purchase, purchase_id)
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    
+    if purchase.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this purchase")
+    
+    db.delete(purchase)
+    db.commit()
+    return None
 
 # ✅ 내가 구매한 상품 목록 조회
 @router.get("/purchases/me", status_code=200)
@@ -281,10 +297,11 @@ def get_my_purchases(
         product = db.get(Product, purchase.product_id)
         seller = db.get(User, product.user_id)
         purchased_products.append({
+            "purchase_id": purchase.id,  # 구매 내역 ID 추가
             "id": product.id,
             "title": product.title,
             "price": product.price,
-            "seller_name": seller.login_id,  # 'name'을 'login_id'로 변경
+            "seller_name": seller.login_id,
             "purchase_date": purchase.purchase_date
         })
     
