@@ -40,7 +40,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 origins = [
     "http://localhost:3000",  # React 개발 서버
     "http://127.0.0.1:3000",  # 로컬호스트 IP
-    #"https://yourdomain.com",  # 실제 배포된 프론트엔드 URL (필요 시 추가)
+    "https://main.d1iulv8d8kg0ik.amplifyapp.com",  # 실제 배포된 프론트엔드 URL (필요 시 추가)
 ]
 
 app.add_middleware(
