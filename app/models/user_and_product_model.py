@@ -107,3 +107,7 @@ class ProductSortType(Enum):
 
 class RespComments(BaseModel):
     comments : list[Comment]
+
+class ProductView(SQLModel, table=True):  # ✅ 테이블로 지정
+    product_id: Optional[int] = Field(default=None, foreign_key="product.id", primary_key=True)  # ✅ default=None 추가
+    product_views: int = Field(default=0)  # ✅ 기본값 추가

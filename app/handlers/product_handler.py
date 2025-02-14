@@ -333,3 +333,31 @@ def get_product_purchase_info(
         "buyer_id": purchase.user_id,
         "purchase_date": purchase.purchase_date
     }
+
+def increment_view_count(db: Session, product_id: int):
+    # 상품 존재 여부 확인
+    product = db.exec(select(Product).where(Product.id == product_id)).first()  # ✅ select() 사용
+    if not product:
+        return None  # 존재하지 않는 상품
+
+    # 조회수 확인 후 증가
+    product_view = db.exec(select(ProductView).where(ProductView.product_id == product_id)).first()  # ✅ select() 사용
+    
+    if not product_view:
+        product_view = ProductView(product_id=product_id, product_views=1)
+        db.add(product_view)
+    else:
+        product_view.product_views += 1
+
+    db.commit()
+    db.refresh(product_view)  # ✅ 세션에서 새로고침
+    return product_view
+
+@router.post("/{product_id}/view")
+def increment_view(product_id: int, db: Session = Depends(get_db_session)):
+    product_view = increment_view_count(db=db, product_id=product_id)
+    print(product_view)
+    if not product_view:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"product_id": product_id, "views": product_view.product_views}
