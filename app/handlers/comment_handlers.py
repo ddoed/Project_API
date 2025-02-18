@@ -34,9 +34,6 @@ def create_comment(
     new_comment = comment_service.create_comment(session, product_id, current_user.id, content)
     return RespComments(comments=[new_comment])
 
-# ✅ Pydantic 모델 정의
-class CommentUpdate(BaseModel):
-    content: str
 
 # 댓글 수정 (인증 필요)
 @router.put("/{comment_id}", status_code=200)

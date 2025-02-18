@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 
 router = APIRouter()
+
 # 쿼리 파라미터에서 user_id를 추출하는 함수
 def get_user_id_from_query(ws: WebSocket):
     user_id = ws.query_params.get('user_id')

@@ -11,20 +11,18 @@ router = APIRouter(
 class CategoryRequest(BaseModel):
     name: str
 
-# ✅ 전체 카테고리 목록 조회
+# 전체 카테고리 목록 조회
 @router.get("/", status_code=200)
 def get_categories(db: Session = Depends(get_db_session)) -> List[Category]:
-    """전체 카테고리 목록 가져오기"""
     categories = db.exec(select(Category)).all()
     return categories
 
-# ✅ 새로운 카테고리 추가 API
+# 새로운 카테고리 추가
 @router.post("/", status_code=201)
 def create_category(
     categoryRequest: CategoryRequest = Body(...),
     db: Session = Depends(get_db_session)
 ) -> Category:
-    """새로운 카테고리 추가"""
     
     # 이미 존재하는 카테고리인지 확인
     existing_category = db.exec(select(Category).where(Category.name == categoryRequest.name)).first()

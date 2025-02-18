@@ -76,6 +76,9 @@ class Comment(SQLModel, table=True):
     product: Product = Relationship(back_populates="comments")
     user: User = Relationship(back_populates="comments")
 
+class CommentUpdate(BaseModel):
+    content: str
+
 class Purchase(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     # 구매자 id
@@ -108,6 +111,6 @@ class ProductSortType(Enum):
 class RespComments(BaseModel):
     comments : list[Comment]
 
-class ProductView(SQLModel, table=True):  # ✅ 테이블로 지정
-    product_id: Optional[int] = Field(default=None, foreign_key="product.id", primary_key=True)  # ✅ default=None 추가
-    product_views: int = Field(default=0)  # ✅ 기본값 추가
+class ProductView(SQLModel, table=True): 
+    product_id: Optional[int] = Field(default=None, foreign_key="product.id", primary_key=True)
+    product_views: int = Field(default=0)
