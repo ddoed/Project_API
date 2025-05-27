@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 from typing import List
 
 router = APIRouter(
-    prefix="/categories"
+    prefix="/api/categories"
 )
 
 class CategoryRequest(BaseModel):

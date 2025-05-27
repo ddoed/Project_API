@@ -8,7 +8,7 @@ from app.handlers.auth_handler import get_current_user
 from sqlmodel import Session, asc, desc, select
 
 router = APIRouter(
-    prefix="/products"
+    prefix="/api/products"
 )
 
 def validate_product_id(

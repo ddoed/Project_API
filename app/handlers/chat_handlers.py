@@ -10,7 +10,7 @@ router = APIRouter()
 chat_service = ChatService()
 
 # 채팅방 생성
-@router.post("/products/{product_id}/chats")
+@router.post("/api/products/{product_id}/chats")
 def create_chatroom(
     product_id: int,
     current_user=Depends(get_current_user),
@@ -28,7 +28,7 @@ def create_chatroom(
     )
 
 # 채팅방 목록 조회
-@router.get("/chats")
+@router.get("/api/chats")
 def get_chatrooms(
     current_user=Depends(get_current_user),
     session=Depends(get_db_session)):
@@ -44,7 +44,7 @@ def get_chatrooms(
     ])
 
 # 채팅방 상세 조회 (메세지 조회)
-@router.get("/chats/{chatroom_id}")
+@router.get("/api/chats/{chatroom_id}")
 def get_chats(
     chatroom_id: int,
     current_user=Depends(get_current_user),

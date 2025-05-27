@@ -16,7 +16,7 @@ def get_user_id_from_query(ws: WebSocket):
         raise HTTPException(status_code=400, detail="user_id query parameter is required")
     return int(user_id)
 
-@router.websocket("/chats/{chatroom_id}/message")
+@router.websocket("/api/chats/{chatroom_id}/message")
 async def chatroom_websocket(ws: WebSocket, chatroom_id: int, user_id: int = Depends(get_user_id_from_query), session: Session = Depends(get_db_session)):
     """WebSocket을 이용한 실시간 채팅 기능"""
 
@@ -71,7 +71,7 @@ async def chatroom_websocket(ws: WebSocket, chatroom_id: int, user_id: int = Dep
         await ws_manager.send_to_room(chatroom_id, f"사용자가 {user_id} 퇴장했습니다.")
 
 
-@router.post("/chats/{chatroom_id}/messages")
+@router.post("/api/chats/{chatroom_id}/messages")
 def send_message(
     chatroom_id: int,
     message: MessageResponse,

@@ -10,7 +10,7 @@ from sqlmodel import select, Session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 router = APIRouter(
-    prefix="/users"
+    prefix="/api/users"
 )
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 

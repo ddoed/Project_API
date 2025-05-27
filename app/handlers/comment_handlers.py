@@ -6,7 +6,7 @@ from app.models.user_and_product_model import *
 from app.db import get_db_session
 from app.services.comment_service import CommentService
 
-router = APIRouter(prefix="/comments")
+router = APIRouter(prefix="/api/comments")
 comment_service = CommentService()
 
 # 댓글 목록 조회
