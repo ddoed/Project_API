@@ -14,6 +14,9 @@ from app.handlers import (auth_handler,
                           product_handler,
                           ws_handler,
                           category_handler)
+                          
+
+UPLOAD_DIR = "/home/ubuntu/backend-app/uploads"
 
 # FastAPI 애플리케이션 생성
 app = FastAPI()
