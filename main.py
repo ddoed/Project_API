@@ -33,7 +33,7 @@ app.include_router(product_handler.router)
 app.include_router(ws_handler.router)
 app.include_router(category_handler.router)
 
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # ? react 사용을 위한 CORS 설정
 # 허용할 출처(origin) 목록
